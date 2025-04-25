@@ -88,14 +88,18 @@ class PRISM_A():
 
     def process(self, data_records:List[str], return_oracle_usage:bool= False) -> Union[List[str], Tuple[List[str], List[bool]]]:
         '''
-        Returns the computed output for all data records. It guarantees the output matches what the `oracle` would've provided on at least `target` fraction of the records with probbility 1-`delta` but minimizes number of `oracle` usags
+        Returns the computed output for all data records. It guarantees the output matches what the `oracle` would've provided on at least `target` fraction of the records with probability 1-`delta` but minimizes number of `oracle` usags
         Args:
             data_records: String array containing data records to be processed. 
             return_oracle_usage: If `True`, the function additionally outputs whether a record was processed by oracle or not
 
         Returns:
-            List[str]: The computed outputs for the input `data_records` in the same order as `data_records`
-            List[bool]: Returned only if `return_oracle_usage=True`. For each output, whether it was computed by the oracle
+            Union[List[str], Tuple[List[str], List[bool]]]: 
+                - If `return_oracle_usage` is False, returns a list of processed output strings:
+                    - List[str]: The computed outputs for the input `data_records` in the same order as `data_records`
+                - If `return_oracle_usage` is True, returns a tuple:
+                    - List[str]: The computed outputs for the input `data_records` in the same order as `data_records`
+                    - List[bool]: A list of booleans where each element indicates whether the oracle was used for that record.
 
         '''
         self.proxy.reset()

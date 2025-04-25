@@ -82,7 +82,7 @@ class PRISM_P():
 
     def process(self, data_records:List[str]) -> List[int]:
         '''
-        Returns a set of data indexes estimated to be positive. It guarantees the set has precision at least equal to `target` with probbility 1-`delta`
+        Returns a set of data indexes estimated to be positive. It guarantees the set has precision at least equal to `target` with probability 1-`delta`
 
         Args:
             data_records: String array containing data records to be processed. 

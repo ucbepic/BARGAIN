@@ -181,7 +181,7 @@ class PRISM_R():
 
     def process(self, data_records:List[str]) -> List[int]:
         '''
-        Returns a set of data indexes estimated to be positive. It guarantees the set has recall at least equal to `target` with probbility 1-`delta`
+        Returns a set of data indexes estimated to be positive. It guarantees the set has recall at least equal to `target` with probability 1-`delta`
 
         Args:
             data_records: String array containing data records to be processed. 
