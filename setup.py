@@ -1,0 +1,24 @@
+from distutils.core import setup
+
+
+setup(
+    name='PRISM',
+    version='0.1.0',    
+    description='PRISM: Low-Cost LLM-Powered Data Processing',
+    url='https://github.com/szeighami/prism',
+    author='Sepanta Zeighami',
+    author_email='zeighami@berkeley.edu',
+    license='MIT',
+    packages=['PRISM'],
+    install_requires=['pandas',
+                      'numpy',                     
+                      'tqdm',                     
+                      ],
+
+    classifiers=[
+        'Development Status :: 1 - Planning',
+        'License :: OSI Approved :: MIT License',  
+        'Operating System :: OS Independent',        
+        'Programming Language :: Python :: 3',
+    ],
+)
