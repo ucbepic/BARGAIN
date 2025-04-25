@@ -5,18 +5,34 @@ from PRISM.models.AbstractModels import Oracle, Proxy
 from PRISM.bounds.betting_bounds import test_if_true_mean_is_above_m, test_if_true_mean_is_below_m
 
 class PRISM_P():
+    '''
+    Class to process a dataset using a cheap proxy or an expensive oracle while guaranteeing a desired precision target
+    '''
     def __init__(
-        self,
-        data_indxes: np.ndarray,
-        proxy: Proxy,
-        oracle: Oracle, 
-        delta=0.1,
-        target=0.9,
-        budget=400,
-        M= 20,
-        eta = 0,
-        seed=0
-    ):
+                self,
+                data_indxes: np.ndarray,
+                proxy: Proxy,
+                oracle: Oracle, 
+                delta:float=0.1,
+                target:float=0.9,
+                budget:int=400,
+                M:int= 20,
+                eta:int = 0,
+                seed:int=0
+            ) -> None:
+        '''
+        Args: 
+            data_indxes: Identifies for each data record to be processed. The identifiers are passed to `proxy` or `oracle` to process a record. Outputs also use these identifiers to refer to a data record. 
+            proxy: Proxy model to use 
+            oracle: Oracle model to use 
+            delta: Probability of failure, float between 0 and 1
+            target: Desired precision target, float between 0 and 1
+            bugdet: Maximum number of records that can be processed by the oracle
+            M: Number of different thresholds to be considered by algorithm
+            eta: Tolerance parameter
+            seed: Random seed
+
+        '''
         self.delta = delta
         self.target = target
         self.budget = budget
@@ -32,7 +48,7 @@ class PRISM_P():
             np.random.seed(seed)
 
 
-    def sample_till_confident(self, budget, all_data_indexes, confidence, target, total_sampled, curr_thresh):
+    def __sample_till_confident(self, budget, all_data_indexes, confidence, target, total_sampled, curr_thresh):
         sample_step = 10
         sampled_label = np.array([])
         sampled_index = np.array([])
@@ -66,7 +82,14 @@ class PRISM_P():
         return False, sampled_index, sampled_label, total_sampled
 
 
-    def process(self):
+    def process(self) -> np.ndarray:
+        '''
+        Returns a set of data indexes estimated to be positive. It guarantees the set has precision at least equal to `target` with probbility 1-`delta`
+
+        Returns:
+            np.ndarray: A numpy array containing data indexes estimated to be positive. This is a subset of the given `data_indxes`
+
+        '''
         data_idxs = self.data_indexs
         proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(data_idxs)
         x_probs = proxy_preds*proxy_scores+(1-proxy_preds)*(1-proxy_scores)
@@ -87,7 +110,7 @@ class PRISM_P():
         best_thresh = 0
         tries_used = 0
         for curr_thresh in range(thresh_step-1, len(data_idxs), thresh_step):
-            is_confident_above_target, sampled_index, sampled_label, total_sampled = self.sample_till_confident(budget, data_idxs, self.delta/self.eta, self.target, total_sampled,  curr_thresh)
+            is_confident_above_target, sampled_index, sampled_label, total_sampled = self.__sample_till_confident(budget, data_idxs, self.delta/self.eta, self.target, total_sampled,  curr_thresh)
 
             sample_labels = np.concatenate([sample_labels,sampled_label])
             sample_indexes = np.concatenate([sample_indexes,sampled_index])

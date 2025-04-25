@@ -7,17 +7,32 @@ from PRISM.bounds.betting_bounds import test_if_true_mean_is_above_m, test_if_tr
 
 
 class PRISM_A():
+    '''
+    Class to process a dataset using a cheap proxy or an expensive oracle while guaranteeing the output is validatd by the oracle with a desired accuracy target
+    '''
     def __init__(
-        self,
-        data_indxes: np.ndarray,
-        proxy: Proxy,
-        oracle: Oracle,
-        delta=0.1,
-        target=0.9,
-        M= 20,
-        verbose=True,
-        seed=0
-    ):
+                self,
+                data_indxes: np.ndarray,
+                proxy: Proxy,
+                oracle: Oracle,
+                delta:float=0.1,
+                target:float=0.9,
+                M:int= 20,
+                verbose:bool=True,
+                seed:int=0
+            ):
+        '''
+        Args: 
+            data_indxes: Identifies for each data record to be processed. The identifiers are passed to `proxy` or `oracle` to process a record. Outputs also use these identifiers to refer to a data record. 
+            proxy: Proxy model to use 
+            oracle: Oracle model to use 
+            delta: Probability of failure, float between 0 and 1
+            target: Desired precision target, float between 0 and 1
+            M: Number of different thresholds to be considered by algorithm
+            verbose: output progress details or not
+            seed: Random seed
+
+        '''
         self.delta = delta
         self.target = target
         self.data_indexs = data_indxes
@@ -30,7 +45,7 @@ class PRISM_A():
             np.random.seed(seed)
         self.verbose = verbose
   
-    def check_worth_trying(self, sample_indx, sample_is_correct, t, target):
+    def __check_worth_trying(self, sample_indx, sample_is_correct, t, target):
         if len(sample_indx) < 50:
             return True
         mask_at_t = sample_indx<=t
@@ -39,13 +54,13 @@ class PRISM_A():
             return False
         return True
 
-    def sample_till_confident_above_mean(self, all_data_indexes, all_preds, confidence, target, total_sampled, curr_thresh):
+    def __sample_till_confident_above_mean(self, all_data_indexes, all_preds, confidence, target, total_sampled, curr_thresh):
         sample_step = 10
         sampled_is_correct = np.array([])
         sampled_preds = np.array([])
         sampled_index = np.array([]).astype(int)
         
-        while self.check_worth_trying(sampled_index, sampled_is_correct, curr_thresh, target):
+        while self.__check_worth_trying(sampled_index, sampled_is_correct, curr_thresh, target):
             sampled_indexes, budget_used, sampled_all = self.sampler.sample(curr_thresh, sample_step)
 
             sampled_data_indexes = all_data_indexes[sampled_indexes]
@@ -74,7 +89,14 @@ class PRISM_A():
             
         return False, sampled_index, total_sampled
 
-    def process(self):
+    def process(self) -> pd.DataFrame:
+        '''
+        Returns the computed output for all data records. It guarantees the output matches what the `oracle` would've provided on at least `target` fraction of the records with probbility 1-`delta` but minimizes number of `oracle` usags
+
+        Returns:
+            pd.DataFrame: A dataframe indexed by the `data_indxes`, with columns `output` and `used_oracle` where each row corresponds to a data record, `output` column shows the computed output for the record and `used_oracle` denotes whether the oracle was used to compute the output for that record or not
+
+        '''
         data_idxs = self.data_indexs
         self.sampler = WoR_Sampler(len(data_idxs))
         thresh_step = max(len(data_idxs)//self.M, 1)
@@ -105,7 +127,7 @@ class PRISM_A():
                 if new_target <= 0:
                     continue
 
-            is_confident_above_target, sampled_index, total_sampled = self.sample_till_confident_above_mean(data_idxs, proxy_preds, self.delta, new_target, total_sampled,  curr_thresh)
+            is_confident_above_target, sampled_index, total_sampled = self.__sample_till_confident_above_mean(data_idxs, proxy_preds, self.delta, new_target, total_sampled,  curr_thresh)
 
             sample_indexes = np.concatenate([sample_indexes,sampled_index])
 

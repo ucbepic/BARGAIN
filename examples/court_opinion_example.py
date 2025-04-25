@@ -25,7 +25,9 @@ oracle = GPT4o(df['id'].to_numpy(), df['opinion_text'].to_numpy(), task, is_bina
 proxy = GPT4omini(df['id'].to_numpy(), df['opinion_text'].to_numpy(), task, is_binary=True)
 
 # Call PRISM to process
-prism = PRISM_A(df['id'].to_numpy(), proxy, oracle, 0.1, 0.9, seed=0)
+target = 0.9
+delta=0.1
+prism = PRISM_A(df['id'].to_numpy(), proxy, oracle, delta, target, seed=0)
 output_df = prism.process()
 
 # Evaluate output 

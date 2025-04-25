@@ -9,7 +9,7 @@ setup(
     author='Sepanta Zeighami',
     author_email='zeighami@berkeley.edu',
     license='MIT',
-    packages=['PRISM'],
+    packages=['PRISM', 'PRISM.process', 'PRISM.bounds', 'PRISM.models', 'PRISM.sampler'],
     install_requires=['pandas',
                       'numpy',                     
                       'tqdm',                     

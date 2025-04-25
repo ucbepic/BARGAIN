@@ -38,13 +38,22 @@ def get_bool_val_prob(res, logprobs=None):
 
 class GPT4omini(Proxy):
     def __init__(
-        self,
-        indexes,
-        data,
-        task,
-        is_binary=False,
-        verbose=True
-    ):
+                self,
+                indexes:np.ndarray,
+                data:np.ndarray,
+                task:str,
+                is_binary:bool=False,
+                verbose:bool=True
+            ) -> None :
+        '''
+        Args: 
+            indexes: Identifies for each data record. The identifier for a record is passed to the model when processing the record. 
+            data: list of data inputs indexes by `indexes`. For the `i`-th index, `data[i]` contains the data for record with identifier `indexes[i]`
+            task: prompt to perform on each item in the `data` list. `task` must be a templatized string: `task.format(data[i])` is passed to gpt4o-mini to process the `i`-th data record
+            is_binary: Set to `True` if the task is a binary classifiction task
+            verbose: provide progress updates
+
+        '''
         super().__init__(proxy_inputs={key: data[i] for i, key in enumerate(indexes)}, verbose=verbose)
         self.task = task
         self.is_binary=is_binary
@@ -91,12 +100,21 @@ class GPT4omini(Proxy):
 class GPT4o(Oracle):
     def __init__(
         self,
-        indexes,
-        data,
-        task,
-        is_binary=False,
-        verbose=True
+        indexes:np.ndarray,
+        data:np.ndarray,
+        task:str,
+        is_binary:bool=False,
+        verbose:bool=True
     ):
+        '''
+        Args: 
+            indexes: Identifies for each data record. The identifier for a record is passed to the model when processing the record. 
+            data: list of data inputs indexes by `indexes`. For the `i`-th index, `data[i]` contains the data for record with identifier `indexes[i]`
+            task: prompt to perform on each item in the `data` list. `task` must be a templatized string: `task.format(data[i])` is passed to gpt4o to process the `i`-th data record
+            is_binary: Set to `True` if the task is a binary classifiction task
+            verbose: provide progress updates
+
+        '''
         super().__init__(oracle_inputs={key: data[i] for i, key in enumerate(indexes)}, verbose=verbose)
         self.task = task
         self.is_binary=is_binary
