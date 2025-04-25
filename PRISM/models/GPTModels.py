@@ -36,27 +36,26 @@ def get_bool_val_prob(res, logprobs=None):
 
 
 
-class GPT4omini(Proxy):
+class OpenAIProxy(Proxy):
     def __init__(
                 self,
-                indexes:np.ndarray,
-                data:np.ndarray,
                 task:str,
                 is_binary:bool=False,
+                model:str='gpt-4o-mini',
                 verbose:bool=True
             ) -> None :
         '''
         Args: 
-            indexes: Identifies for each data record. The identifier for a record is passed to the model when processing the record. 
-            data: list of data inputs indexes by `indexes`. For the `i`-th index, `data[i]` contains the data for record with identifier `indexes[i]`
-            task: prompt to perform on each item in the `data` list. `task` must be a templatized string: `task.format(data[i])` is passed to gpt4o-mini to process the `i`-th data record
-            is_binary: Set to `True` if the task is a binary classifiction task
+            task: prompt to perform on data records. `task` must be a templatized string: `task.format(data_record)` is passed to `model` to process a `data_record`
+            is_binary: Set to `True` if the task is a binary classifiction task. **WARNING** If `True`, `task` should have directions to ensure `model` outputs only True or False
+            model: Name of OpenAI model
             verbose: provide progress updates
 
         '''
-        super().__init__(proxy_inputs={key: data[i] for i, key in enumerate(indexes)}, verbose=verbose)
+        super().__init__(verbose=verbose)
         self.task = task
         self.is_binary=is_binary
+        self.model = model
 
         self.client = OpenAI(
             api_key=os.environ.get("OPENAI_API_KEY"),
@@ -68,7 +67,7 @@ class GPT4omini(Proxy):
                     {"role": "system", "content": "You are a helpful assistant that is good at processing data."},
                     {"role": "user", "content": task_with_data}
                     ]
-        response = self.client.beta.chat.completions.parse( model='gpt-4o-mini', messages=prompt, logprobs=True, seed=0, temperature=0)
+        response = self.client.beta.chat.completions.parse( model=self.model, messages=prompt, logprobs=True, seed=0, temperature=0)
         if response.choices[0].logprobs is None:
             prob = 0
         else:
@@ -86,7 +85,7 @@ class GPT4omini(Proxy):
                     {"role": "system", "content": "You are a helpful assistant that is good at processing data."},
                     {"role": "user", "content": task_with_data}
                     ]
-        response = self.client.beta.chat.completions.parse( model='gpt-4o-mini', messages=prompt, logprobs=True, seed=0, temperature=0, max_tokens=2, top_logprobs=10)
+        response = self.client.beta.chat.completions.parse( model=self.model, messages=prompt, logprobs=True, seed=0, temperature=0, max_tokens=2, top_logprobs=10)
         res =response.choices[0].message.content
         logprobs = response.choices[0].logprobs.content
         return get_bool_val_prob(res, logprobs)
@@ -97,27 +96,26 @@ class GPT4omini(Proxy):
         else:
             return self.proxy_func_general(data_record)
 
-class GPT4o(Oracle):
+class OpenAIOracle(Oracle):
     def __init__(
         self,
-        indexes:np.ndarray,
-        data:np.ndarray,
         task:str,
         is_binary:bool=False,
+        model:str='gpt-4o',
         verbose:bool=True
     ):
         '''
         Args: 
-            indexes: Identifies for each data record. The identifier for a record is passed to the model when processing the record. 
-            data: list of data inputs indexes by `indexes`. For the `i`-th index, `data[i]` contains the data for record with identifier `indexes[i]`
-            task: prompt to perform on each item in the `data` list. `task` must be a templatized string: `task.format(data[i])` is passed to gpt4o to process the `i`-th data record
-            is_binary: Set to `True` if the task is a binary classifiction task
+            task: prompt to perform on data records. `task` must be a templatized string: `task.format(data_record)` is passed to `model` to process a `data_record`
+            is_binary: Set to `True` if the task is a binary classifiction task. **WARNING** If `True`, `task` should have directions to ensure `model` outputs only True or False
+            model: Name of OpenAI model
             verbose: provide progress updates
 
         '''
-        super().__init__(oracle_inputs={key: data[i] for i, key in enumerate(indexes)}, verbose=verbose)
+        super().__init__(verbose=verbose)
         self.task = task
         self.is_binary=is_binary
+        self.model = model
 
         self.client = OpenAI(
             api_key=os.environ.get("OPENAI_API_KEY"),
@@ -129,7 +127,7 @@ class GPT4o(Oracle):
                     {"role": "system", "content": "You are a helpful assistant that is good at processing data."},
                     {"role": "user", "content": task_with_data}
                 ]
-        response = self.client.beta.chat.completions.parse( model='gpt-4o', messages=prompt, logprobs=False, seed=0, temperature=0, max_tokens=2)
+        response = self.client.beta.chat.completions.parse( model=self.model, messages=prompt, logprobs=False, seed=0, temperature=0, max_tokens=2)
         res=response.choices[0].message.content
         oracle_output = get_bool_val_prob(res)
         return oracle_output == proxy_output, oracle_output
@@ -149,7 +147,7 @@ class GPT4o(Oracle):
                         Is the provided response correct? If the provided answer is incorrect, provide the correct answer.
                         '''}
                 ]
-        response = self.client.beta.chat.completions.parse( model='gpt-4o', messages=prompt, response_format=GeneralOracleAnswer, logprobs=False, seed=0, temperature=0)
+        response = self.client.beta.chat.completions.parse( model=self.model, messages=prompt, response_format=GeneralOracleAnswer, logprobs=False, seed=0, temperature=0)
         res=json.loads(response.choices[0].message.content)
         correct_answer = res['correct_answer']
         if res['is_correct']:

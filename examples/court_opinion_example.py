@@ -1,8 +1,8 @@
-
 import numpy as np
 import pandas as pd
 
-from PRISM import PRISM_A, GPT4omini, GPT4o
+from PRISM import OpenAIProxy, OpenAIOracle
+from PRISM import PRISM_A
 
 # Define Data and Task
 task = ''' 
@@ -18,28 +18,21 @@ Here is the opinion: {}
 You must respond with ONLY True or False:
 '''
 df = pd.read_csv(f'court_opinion.csv')
-df['id'] = np.arange(len(df))
 
 # Define oracle and proxy
-oracle = GPT4o(df['id'].to_numpy(), df['opinion_text'].to_numpy(), task, is_binary=True)
-proxy = GPT4omini(df['id'].to_numpy(), df['opinion_text'].to_numpy(), task, is_binary=True)
+proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
+oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 
 # Call PRISM to process
-target = 0.9
-delta=0.1
-prism = PRISM_A(df['id'].to_numpy(), proxy, oracle, delta, target, seed=0)
-output_df = prism.process()
+prism = PRISM_A(proxy, oracle, target=0.9, delta=0.1, seed=0)
+output, used_oracle = prism.process(df['opinion_text'].to_numpy(), return_oracle_usage=True)
+df['output'] = output
+df['used_oracle'] = used_oracle
+used_proxy_count = 1-df['used_oracle'].mean()
 
 # Evaluate output 
-print('Running oracle for evaluation')
-output_df["used_oracle"] = output_df["used_oracle"].astype(bool)
-proxy_output_df = output_df[~output_df['used_oracle']].reset_index()
-used_proxy_count = len(proxy_output_df)
-indxs = proxy_output_df['data_indx'].to_numpy()
-oracle_outputs = oracle.get_pred(indxs)
-df_new_oracle = pd.DataFrame.from_dict({'data_indx':indxs, 'output':oracle_outputs, 'used_oracle':[True]*len(indxs)})
-df_all_oracle = pd.concat([df_new_oracle, output_df[output_df['used_oracle']].reset_index()]).set_index('data_indx')
-df_joined = df_all_oracle.join(output_df, rsuffix='_including_proxy')
-df_joined['is_correct'] = df_joined['output'] == df_joined['output_including_proxy']
-print(f"Accuracy: {df_joined['is_correct'].mean()}, Used Proxy: {used_proxy_count}")
-df_joined.to_csv('res_court_opinion.csv')
+print('Running oracle on all records for evaluation')
+df['output_oracle']=df['output']
+df.loc[~df['used_oracle'], 'output_oracle'] = oracle.get_pred(df.loc[~df['used_oracle'], 'opinion_text'].to_numpy())
+df['is_correct'] = df['output_oracle'] == df['output']
+print(f"Accuracy: {df['is_correct'].mean()}, Used Proxy: {used_proxy_count:.2f}")

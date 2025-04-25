@@ -1,8 +1,7 @@
 
-import numpy as np
 import pandas as pd
 
-from PRISM import GPT4omini, GPT4o
+from PRISM import OpenAIProxy, OpenAIOracle
 from PRISM import PRISM_P, PRISM_R
 from generate_toy_data import generate_color_or_animal_data
 
@@ -24,12 +23,12 @@ def recall(indexes, labels, pred_indexes):
 
 def test_given_precision_requirement(data_df, task, k, target, delta):
     # Define oracle and proxy
-    oracle = GPT4o(data_df['id'].to_numpy(), data_df['value'].to_numpy(), task, is_binary=True)
-    proxy = GPT4omini(data_df['id'].to_numpy(), data_df['value'].to_numpy(), task, is_binary=True)
+    proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
+    oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 
     # Call PRISM to process
-    prism = PRISM_P(data_df['id'].to_numpy(), proxy, oracle, delta, target, k, seed=0)
-    est_positive_indx = prism.process()
+    prism = PRISM_P(proxy, oracle, delta, target, k, seed=0)
+    est_positive_indx = prism.process(data_df['value'].to_numpy())
 
     # Evalute
     est_precision = precision(data_df['id'].to_numpy(), data_df['is_animal'].to_numpy(), est_positive_indx)
@@ -39,12 +38,12 @@ def test_given_precision_requirement(data_df, task, k, target, delta):
 
 def test_given_recall_requirement(data_df, task, k, target, delta):
     # Define oracle and proxy
-    oracle = GPT4o(data_df['id'].to_numpy(), data_df['value'].to_numpy(), task, is_binary=True)
-    proxy = GPT4omini(data_df['id'].to_numpy(), data_df['value'].to_numpy(), task, is_binary=True)
+    proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
+    oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 
     # Call PRISM to process
-    prism = PRISM_R(data_df['id'].to_numpy(), proxy, oracle, delta, target, k, seed=0)
-    est_positive_indx = prism.process()
+    prism = PRISM_R(proxy, oracle, delta, target, k, seed=0)
+    est_positive_indx = prism.process(data_df['value'].to_numpy())
 
     # Evalute
     est_precision = precision(data_df['id'].to_numpy(), data_df['is_animal'].to_numpy(), est_positive_indx)
@@ -55,7 +54,7 @@ def test_given_recall_requirement(data_df, task, k, target, delta):
 
 
 # Define Data and Task
-df = generate_color_or_animal_data(n=500, animal_prop=0.5, hard_prop=0.5, misleading_text_length=1000)
+df = generate_color_or_animal_data(n=500, animal_prop=0.5, hard_prop=0.5, misleading_text_length=600)
 task = ''' 
         I will give you a text. Your task is to determine if the text mentions an animal.
 

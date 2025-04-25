@@ -1,4 +1,5 @@
 import numpy as np
+from typing import List
 
 from PRISM.sampler.wor_sampler import WoR_Sampler
 from PRISM.models.AbstractModels import Oracle, Proxy 
@@ -10,7 +11,6 @@ class PRISM_R():
     '''
     def __init__(
         self,
-        data_indxes: np.ndarray,
         proxy: Proxy,
         oracle: Oracle,
         delta:float=0.1,
@@ -22,7 +22,6 @@ class PRISM_R():
     ):
         '''
         Args: 
-            data_indxes: Identifies for each data record to be processed. The identifiers are passed to `proxy` or `oracle` to process a record. Outputs also use these identifiers to refer to a data record. 
             proxy: Proxy model to use 
             oracle: Oracle model to use 
             delta: Probability of failure, float between 0 and 1
@@ -36,7 +35,6 @@ class PRISM_R():
         self.delta = delta
         self.target = target
         self.budget = budget
-        self.data_indexs = data_indxes
 
         self.proxy = proxy
         self.oracle = oracle
@@ -47,7 +45,7 @@ class PRISM_R():
         if seed is not None:
             np.random.seed(seed)
 
-    def __sample_till_can_exclude(self, begin_n, delta, budget, all_data_indexes, total_sampled):
+    def __sample_till_can_exclude(self, begin_n, delta, budget, all_data_indexes, total_sampled, data_records):
         sample_step = 10
         sampled_label = np.array([])
         sampled_index = np.array([])
@@ -63,7 +61,7 @@ class PRISM_R():
                 return np.mean(sampled_label)<self.beta, sampled_index, sampled_label, total_sampled
 
             sampled_data_indexes = all_data_indexes[sampled_indexes]
-            sampled_label = np.concatenate([sampled_label, self.oracle.get_pred(sampled_data_indexes)])
+            sampled_label = np.concatenate([sampled_label, self.oracle.get_pred(data_records[sampled_indexes], sampled_data_indexes)])
             sampled_index = np.concatenate([sampled_index, sampled_indexes])
             total_sampled += budget_used
 
@@ -78,7 +76,7 @@ class PRISM_R():
     
         return False, sampled_index, sampled_label, total_sampled   
 
-    def __find_sample_region_exp_search(self, data_idxs, budget, est_budget):
+    def __find_sample_region_exp_search(self, data_idxs, data_records, budget, est_budget):
         est_delta = self.delta/2
         exp_search_delta = (self.delta-est_delta)/2
         binary_search_delta = (self.delta-est_delta-exp_search_delta)/2
@@ -90,7 +88,7 @@ class PRISM_R():
         begin_n = len(data_idxs)-2*self.r
         while begin_n>=len(data_idxs)//2 and begin_n>=0:
             exp_search_delta = exp_search_delta/2
-            is_tail, curr_sampled_index, curr_sampled_label, total_sampled  = self.__sample_till_can_exclude(begin_n, exp_search_delta, budget, data_idxs, total_sampled)
+            is_tail, curr_sampled_index, curr_sampled_label, total_sampled  = self.__sample_till_can_exclude(begin_n, exp_search_delta, budget, data_idxs, total_sampled, data_records)
 
             sample_labels = np.concatenate([sample_labels,curr_sampled_label])
             sample_indexes = np.concatenate([sample_indexes,curr_sampled_index])
@@ -100,7 +98,7 @@ class PRISM_R():
                 curr_budget_left = budget-total_sampled
                 if curr_budget_left + est_budget>= (len(data_idxs)-begin_n)/2:
                     return begin_n, binary_search_delta,curr_budget_left
-                begin_n, delta_left, budget_left = self.__find_sample_region_binary_search(begin_n, data_idxs, curr_budget_left, binary_search_delta)
+                begin_n, delta_left, budget_left = self.__find_sample_region_binary_search(begin_n, data_idxs, curr_budget_left, binary_search_delta, data_records)
                 return  begin_n, delta_left, budget_left
 
             begin_n = len(data_idxs)- 2*(len(data_idxs)-begin_n)
@@ -109,7 +107,7 @@ class PRISM_R():
 
 
 
-    def __find_sample_region_binary_search(self, begin_range, data_idxs, budget, bin_search_delta):
+    def __find_sample_region_binary_search(self, begin_range, data_idxs, budget, bin_search_delta, data_records):
         
         sample_labels =[]
         sample_indexes = []
@@ -118,7 +116,7 @@ class PRISM_R():
         last_valid = begin_range
         begin_n = (len(data_idxs)+begin_range)//2
         while True:
-            is_tail, curr_sampled_index, curr_sampled_label, total_sampled  = self.__sample_till_can_exclude(begin_n, bin_search_delta, budget, data_idxs, total_sampled)
+            is_tail, curr_sampled_index, curr_sampled_label, total_sampled  = self.__sample_till_can_exclude(begin_n, bin_search_delta, budget, data_idxs, total_sampled, data_records)
 
             sample_labels = np.concatenate([sample_labels,curr_sampled_label])
             sample_indexes = np.concatenate([sample_indexes,curr_sampled_index])
@@ -144,18 +142,20 @@ class PRISM_R():
                 best_t = t
         return None
 
-    def __process_uniform(self) -> np.ndarray:
-        data_idxs = self.data_indexs
-        proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(data_idxs)
+    def __process_uniform(self, data_records) -> np.ndarray:
+        data_idxs = np.arange(len(data_records))
+        data_records = np.array(data_records)
+        proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(data_idxs, data_records)
         x_probs = proxy_preds*proxy_scores+(1-proxy_preds)*(1-proxy_scores)
 
         sort_indx = np.argsort(x_probs)
         x_probs = x_probs[sort_indx]
         data_idxs = data_idxs[sort_indx]
+        data_records = data_records[sort_indx]
 
         sampled_indexes = np.random.choice(len(data_idxs), self.budget, replace=True)
         sample_data_indx = data_idxs[sampled_indexes]
-        sampled_label =  self.oracle.get_pred(sample_data_indx)
+        sampled_label =  self.oracle.get_pred(data_records[sampled_indexes], sample_data_indx)
         pos_sampled_indexes = sampled_indexes[sampled_label==1]
         threshs_to_try = np.sort(pos_sampled_indexes)
 
@@ -177,22 +177,28 @@ class PRISM_R():
         set_ids = data_idxs[indexes_assumed_positive]
         samp_inds = data_idxs[sampled_indexes[sampled_label==1]]
         all_inds = np.unique( np.concatenate([set_ids, samp_inds]))
-        assert self.oracle.get_number_preds() <= self.budget
         return all_inds
 
-    def process(self) -> np.ndarray:
+    def process(self, data_records:List[str]) -> List[int]:
         '''
         Returns a set of data indexes estimated to be positive. It guarantees the set has recall at least equal to `target` with probbility 1-`delta`
 
+        Args:
+            data_records: String array containing data records to be processed. 
+
         Returns:
-            np.ndarray: A numpy array containing data indexes estimated to be positive. This is a subset of the given `data_indxes`
+            List[int]: A list containing indexes of records in `data_records` estimated to be positive.
 
         '''
-        if self.beta == 0:
-            return self.__process_uniform()
+        self.proxy.reset()
+        self.oracle.reset()
 
-        data_idxs = self.data_indexs
-        proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(data_idxs)
+        if self.beta == 0:
+            return self.__process_uniform(data_records).tolist()
+
+        data_idxs = np.arange(len(data_records))
+        data_records = np.array(data_records)
+        proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(data_idxs, data_records)
         x_probs = proxy_preds*proxy_scores+(1-proxy_preds)*(1-proxy_scores)
         
 
@@ -201,13 +207,14 @@ class PRISM_R():
         sort_indx = np.argsort(x_probs)
         x_probs = x_probs[sort_indx]
         data_idxs = data_idxs[sort_indx]
+        data_records = data_records[sort_indx]
 
         region_budget = self.budget//2
         est_budget = self.budget-region_budget
         est_delta = self.delta/2
         delta_left = self.delta-est_delta
 
-        begin_n, delta_left, budget_left = self.__find_sample_region_exp_search( data_idxs, region_budget, est_budget)
+        begin_n, delta_left, budget_left = self.__find_sample_region_exp_search( data_idxs, data_records, region_budget, est_budget)
 
 
         sampled_indexes = np.random.choice(np.arange(begin_n, len(data_idxs)), est_budget+budget_left)
@@ -228,4 +235,4 @@ class PRISM_R():
                 np.concatenate([pos_samples, thresh_samples])
         )
         assert self.oracle.get_number_preds() <= self.budget
-        return all_inds
+        return all_inds.tolist()

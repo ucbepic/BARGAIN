@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+from typing import List, Union, Tuple
 
 from PRISM.sampler.wor_sampler import WoR_Sampler
 from PRISM.models.AbstractModels import Oracle, Proxy 
@@ -12,22 +12,20 @@ class PRISM_A():
     '''
     def __init__(
                 self,
-                data_indxes: np.ndarray,
                 proxy: Proxy,
                 oracle: Oracle,
-                delta:float=0.1,
                 target:float=0.9,
+                delta:float=0.1,
                 M:int= 20,
                 verbose:bool=True,
                 seed:int=0
-            ):
+            ) -> None:
         '''
         Args: 
-            data_indxes: Identifies for each data record to be processed. The identifiers are passed to `proxy` or `oracle` to process a record. Outputs also use these identifiers to refer to a data record. 
             proxy: Proxy model to use 
             oracle: Oracle model to use 
-            delta: Probability of failure, float between 0 and 1
             target: Desired precision target, float between 0 and 1
+            delta: Probability of failure, float between 0 and 1
             M: Number of different thresholds to be considered by algorithm
             verbose: output progress details or not
             seed: Random seed
@@ -35,7 +33,6 @@ class PRISM_A():
         '''
         self.delta = delta
         self.target = target
-        self.data_indexs = data_indxes
 
         self.proxy = proxy
         self.oracle = oracle
@@ -54,7 +51,7 @@ class PRISM_A():
             return False
         return True
 
-    def __sample_till_confident_above_mean(self, all_data_indexes, all_preds, confidence, target, total_sampled, curr_thresh):
+    def __sample_till_confident_above_target(self, all_data_indexes, all_preds, confidence, target, total_sampled, curr_thresh, data_records):
         sample_step = 10
         sampled_is_correct = np.array([])
         sampled_preds = np.array([])
@@ -65,7 +62,7 @@ class PRISM_A():
 
             sampled_data_indexes = all_data_indexes[sampled_indexes]
             proxy_preds = all_preds[sampled_indexes]
-            sampled_is_correct = np.concatenate([sampled_is_correct, self.oracle.is_answer_correct(sampled_data_indexes, proxy_preds)])
+            sampled_is_correct = np.concatenate([sampled_is_correct, self.oracle.is_answer_correct(sampled_data_indexes, data_records[sampled_indexes], proxy_preds)])
             sampled_index = np.concatenate([sampled_index, sampled_indexes])
             sampled_preds = np.concatenate([sampled_preds, proxy_preds])
             total_sampled += budget_used
@@ -89,26 +86,35 @@ class PRISM_A():
             
         return False, sampled_index, total_sampled
 
-    def process(self) -> pd.DataFrame:
+    def process(self, data_records:List[str], return_oracle_usage:bool= False) -> Union[List[str], Tuple[List[str], List[bool]]]:
         '''
         Returns the computed output for all data records. It guarantees the output matches what the `oracle` would've provided on at least `target` fraction of the records with probbility 1-`delta` but minimizes number of `oracle` usags
+        Args:
+            data_records: String array containing data records to be processed. 
+            return_oracle_usage: If `True`, the function additionally outputs whether a record was processed by oracle or not
 
         Returns:
-            pd.DataFrame: A dataframe indexed by the `data_indxes`, with columns `output` and `used_oracle` where each row corresponds to a data record, `output` column shows the computed output for the record and `used_oracle` denotes whether the oracle was used to compute the output for that record or not
+            List[str]: The computed outputs for the input `data_records` in the same order as `data_records`
+            List[bool]: Returned only if `return_oracle_usage=True`. For each output, whether it was computed by the oracle
 
         '''
-        data_idxs = self.data_indexs
+        self.proxy.reset()
+        self.oracle.reset()
+
+        data_records = np.array(data_records)
+        data_idxs = np.arange(len(data_records))
         self.sampler = WoR_Sampler(len(data_idxs))
         thresh_step = max(len(data_idxs)//self.M, 1)
 
         if self.verbose:
             print("Getting Proxy output and Scores")
-        proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(data_idxs)
+        proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(data_idxs, data_records[data_idxs])
 
         sort_indx = np.argsort(proxy_scores)[::-1]
         proxy_preds = proxy_preds[sort_indx]
         proxy_scores = proxy_scores[sort_indx]
         data_idxs = data_idxs[sort_indx]
+        data_records = data_records[sort_indx]
 
 
         sample_indexes = []
@@ -127,7 +133,7 @@ class PRISM_A():
                 if new_target <= 0:
                     continue
 
-            is_confident_above_target, sampled_index, total_sampled = self.__sample_till_confident_above_mean(data_idxs, proxy_preds, self.delta, new_target, total_sampled,  curr_thresh)
+            is_confident_above_target, sampled_index, total_sampled = self.__sample_till_confident_above_target(data_idxs, proxy_preds, self.delta, new_target, total_sampled,  curr_thresh, data_records)
 
             sample_indexes = np.concatenate([sample_indexes,sampled_index])
 
@@ -142,14 +148,21 @@ class PRISM_A():
         oracle_indexes = np.setdiff1d(data_idxs, proxy_indxs)
         if self.verbose:
             print(f"Processing with Oracle")
-        oracle_outputs = self.oracle.get_pred(oracle_indexes)
-        df_oracle = pd.DataFrame.from_dict({'data_indx':oracle_indexes, 'output':oracle_outputs, 'used_oracle':[True]*len(oracle_indexes)})
+        oracle_outputs = self.oracle.get_pred(data_records[oracle_indexes], oracle_indexes)
 
         if self.verbose:
             print(f"Processing with Proxy")
-        proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(proxy_indxs)
-        df_proxy = pd.DataFrame.from_dict({'data_indx':proxy_indxs, 'output':proxy_preds, 'used_oracle':[False]*len(proxy_indxs)})
+        proxy_preds, proxy_scores = self.proxy.get_preds_and_scores(proxy_indxs, data_records[proxy_indxs])
+        indexes_data_indx = np.concatenate([oracle_indexes, proxy_indxs])
+        output = np.concatenate([oracle_outputs, proxy_preds])
 
-        res_df = pd.concat([df_oracle, df_proxy]).set_index('data_indx')
-        return res_df
+        order = np.argsort(indexes_data_indx)
+        output  = output[order]
+
+        if return_oracle_usage:
+            used_oracle = np.array([True]*len(oracle_indexes)+[False]*len(proxy_indxs))
+            used_oracle  = used_oracle[order]
+            return output.tolist(), used_oracle.tolist()
+
+        return output.tolist()
 
