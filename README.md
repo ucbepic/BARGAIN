@@ -1,7 +1,10 @@
-# PRISM: Low-Cost LLM-Powered Data Processing with Guarantees
+# Low-Cost LLM-Powered Data Processing with Guarantees
 PRISM helps reduce cost when processing a dataset using LLMs. It automatically decides when to use a cheap and potentially inaccurate LLM, or an expensive but accurate LLM when processing the data, while providing accuracy guarantees. It maximizes how often the cheap LLM is used while guaranteeing the answer matches the expensive LLM's output based on a user-provided accuracy requirement.  
 
-## Table of Contents
+
+---
+
+## 📚 Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
@@ -12,24 +15,31 @@ PRISM helps reduce cost when processing a dataset using LLMs. It automatically d
 - [Defining LLMs to Use](#defining-llms-to-use)
 - [Precision and Recall Targets](#precision-and-recall-targets)
 
+---
 
-## Overview
+## 🔍 Overview
 PRISM follows the _model cascade_ framework. To process a data record with an LLM given a prompt, it first runs the cheap model on the data record. Based on the model's output logprobabilities it decides whether to trust the cheap model or not. If it decides the cheap model's output is inaccurate, it then runs the more expensive model. 
 
 <p align="center">
 <img src="https://github.com/szeighami/PRISM/blob/main/images/PRISM_workflow.png" width="500">
 </p>
 
-To decide whether to trust the cheap model, PRISM uses a _cascade threshold_: if the cheap model's output logprobability is more than the cascade threshold, PRISM uses the cheap model's output. This cascade threshold is determined in a preprocessing step to provide theoretical guarantees. Given an accuracy target `T`, **PRISM guarantees the output matches the expensive model's output at least on T% of the documents, but uses the cheap model on as many records as possible.** This guarantee is achieved through sampling and labeling a few records during preprocessing to estimate a suitable cascade threshold. 
+To decide whether to trust the cheap model, PRISM uses a _cascade threshold_: if the cheap model's output logprobability is more than the cascade threshold, PRISM uses the cheap model's output. This cascade threshold is determined in a preprocessing step to provide theoretical guarantees. 
 
-## Installation
+Given an accuracy target `T`, **PRISM guarantees the output matches the expensive model's output at least on T% of the documents, but uses the cheap model on as many records as possible.** This guarantee is achieved through sampling and labeling a few records during preprocessing to estimate a suitable cascade threshold. 
+
+---
+
+## ⚙️ Installation
 To install PRISM, run
 ```bash
 pip install ai-prism
 ```
 PRISM uses `numpy`, `pandas`, `tqdm`, and `openai` libraries. The `openai` library is optional and can be replaced with other service providers.
 
-## Getting Started
+---
+
+## 🚀 Getting Started
 Assume you have a dataset you want to process using LLMs with a specific prompt. We consider a toy example here:
 ```python
 data_records= ['zebra', 'monkey', 'red', 'blue', 'lion', 'black']
@@ -55,15 +65,19 @@ Then, to use PRISM, run:
 prism = PRISM_A(proxy, oracle, target=0.9, delta=0.1)
 res = prism.process(data)
 ```
-`PRISM_A` is the main class used for processing (`A` stands for accuracy, see [here](https://github.com/szeighami/PRISM/blob/main/README.md#precision-and-recall-targets) when considering precision or recall metrics). `target` is the accuracy requirement, `target=0.9` means 90% of outputs must match those of the oracle (`gpt-4o` in this example). `delta` is a probability of failure. Our guarantees are statistical, and `delta` specifies the probability that the guarantee may not hold. For example, `target=0.9, delta=0.1` means at least 90% of outputs must match the oracle's outputs at least `1-delta=0.9` percent of the time. 
-
+`PRISM_A` is the main class used for processing (`A` stands for accuracy, see [here](https://github.com/szeighami/PRISM/blob/main/README.md#precision-and-recall-targets) when considering precision or recall metrics). 
+- `target=0.9` means 90% of outputs must match those of the oracle.
+- `delta=0.1` allows a 10% chance the statistical guarantee may fail.
+  
 Calling `prism.process(data)` processes the data and returns a list, with `len(res)=len(data)` and `res` contains the LLM output for each data record. 
 
-## Examples
+---
+
+## 💡 Examples
 [examples](https://github.com/szeighami/PRISM/tree/main/examples) folder contains multiple example use-cases. _Run examples from the examples directory_.
 
-**To run the examples, you must set your OpenAI API key. ** As of this writing, the [Color or Animal](https://github.com/szeighami/PRISM/blob/main/README.md#color-or-animal) and [Extract Animal](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal) examples cost less than 1$, and the [Supreme Court Opinion](https://github.com/szeighami/PRISM/blob/main/README.md#supreme-court-opinion) example costs about 10$.
-### Color or Animal
+> **Note:** To run the examples, you must set your OpenAI API key. As of this writing, the [Color or Animal](https://github.com/szeighami/PRISM/blob/main/README.md#color-or-animal) and [Extract Animal](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal) examples cost less than 1$, and the [Supreme Court Opinion](https://github.com/szeighami/PRISM/blob/main/README.md#supreme-court-opinion) example costs about 10$.
+## 🟣 Color or Animal?
 This is an extension of the toy example discussed above. Run
 ```bash
 python toy_dataset_color_or_animal.py
@@ -74,7 +88,7 @@ Accuracy: 0.95, Used Proxy: 0.45
 ```
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 45% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 95% of the records. 
 
-### Extract Animal Name
+### 🐾 Extract Animal Name
 This example uses PRISM for an open-ended task. It generates a dataset where each record consists of a description of color theory, but an animal name is inserted in the middle of the text. The task for the LLM is to extract the animal name. Run
 ```bash
 python toy_dataset_extract_animal.py
@@ -85,7 +99,7 @@ Accuracy: 1.0, Used Proxy: 0.57
 ```
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 57% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 100% of the records. 
 
-### Supreme Court Opinion
+### ⚖️ Supreme Court Opinion
 This is an example on a real-world dataset, obtained from https://www.courtlistener.com/. Each record in [the dataset](https://github.com/szeighami/PRISM/blob/main/examples/court_opinion.csv) consists of a written Supreme Court opinion, and the task is to determine whether the opinion reverses a lower court ruling. Run 
 ```bash
 python court_opinion_example.py
@@ -96,7 +110,9 @@ Accuracy: 0.976, Used Proxy: 0.406
 ```
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 40.6% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 97.6% of the records. 
 
-## Defining LLMs to Use
+---
+
+## 🧠 Defining LLMs to Use
 To use non-OpenAI service providers, or specify your own model calling mechanism even for OpenAI models, you can define your own models. You need to define a `Proxy` and an `Oracle`. `Proxy` is a cheap but potentially inaccurate model you want to use as much as possible, and `Oracle` is the expensive and accurate model whose answers you trust. To do so you need to extend the `Proxy` and `Oracle` classes as follows. First, consider `Proxy`:
 ```python
 from PRISM import Proxy
@@ -141,8 +157,11 @@ res = prism.process(data)
 ```
 See our [OpenAI models](https://github.com/szeighami/PRISM/blob/main/PRISM/models/GPTModels.py) as examples of defining your proxy and oracle.
 
-## Precision and Recall Targets
-For binary classification tasks, PRISM supports specifying a desired precision or recall on the output. In such settings, PRISM returns a set of indexes of records estimated to have a positive label, and the precision or recall of this set matches the user-specified requirement with high probability. The use-case is similar to before, but now we use `PRISM_R` and `PRISM_P` classes to specify recall and precision targets, respectively. For example
+
+---
+
+## 🎯 Precision and Recall Targets
+For binary classification tasks, PRISM also supports specifying a desired precision or recall on the output. PRISM returns a set of indexes of records estimated to have a positive label, and the precision or recall of this set matches the user-specified requirement with high probability. Usage is similar to before, but now we use `PRISM_R` and `PRISM_P` classes to specify recall and precision targets, respectively. For example
 ```python
 prism = PRISM_P(proxy, oracle, delta, target, budget)
 est_positive_indx = prism.process(data)
