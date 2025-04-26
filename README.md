@@ -76,7 +76,7 @@ Calling `prism.process(data_records)` processes the data and returns a list, wit
 ## Examples
 [examples](https://github.com/szeighami/PRISM/tree/main/examples) folder contains multiple example use-cases. _Run examples from the examples directory_.
 
-> **Note:** To run the examples, you must set your OpenAI API key. As of this writing, the [Color or Animal](https://github.com/szeighami/PRISM/blob/main/README.md#color-or-animal) and [Extract Animal](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal) examples cost less than 1$, and the [Supreme Court Opinion](https://github.com/szeighami/PRISM/blob/main/README.md#supreme-court-opinion) example costs about 10$.
+> **Note:** To run the examples, you must set your OpenAI API key. As of this writing, the [Color or Animal](https://github.com/szeighami/PRISM/blob/main/README.md#color-or-animal) and [Extract Animal Name](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal-name) examples cost less than 1$, and the [Supreme Court Opinion](https://github.com/szeighami/PRISM/blob/main/README.md#supreme-court-opinion) example costs about 10$.
 ## Color or Animal?
 This is an extension of the toy example discussed above. Run
 ```bash
