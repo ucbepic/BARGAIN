@@ -1,20 +1,16 @@
 # PRISM: Low-Cost LLM-Powered Data Processing with Guarantees
 PRISM helps reduce cost when processing a dataset using LLMs. It automatically decides when to use a cheap and potentially inaccurate LLM, or an expensive but accurate LLM when processing the data, while providing accuracy guarantees. It maximizes how often the cheap LLM is used while guaranteeing the answer matches the expensive LLM's output based on a user-provided accuracy requirement.  
 
----
-
 ## Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Examples](#examples)
   - [Color or Animal](#color-or-animal)
-  - [Supreme Court Opinion](#supreme-court-opinion)
   - [Extract Animal](#extract-animal)
+  - [Supreme Court Opinion](#supreme-court-opinion)
 - [Defining LLMs to Use](#defining-llms-to-use)
 - [Precision and Recall Targets](#precision-and-recall-targets)
-
----
 
 
 ## Overview
@@ -78,17 +74,6 @@ Accuracy: 0.95, Used Proxy: 0.45
 ```
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 45% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 95% of the records. 
 
-### Supreme Court Opinion
-This is an example on a real-world dataset, obtained from https://www.courtlistener.com/. Each record in [the dataset](https://github.com/szeighami/PRISM/blob/main/examples/court_opinion.csv) consists of a Supreme Court written opinion, and the task is to determine whether the opinion reverses a lower court ruling. Run 
-```bash
-python court_opinion_example.py
-```
-We obtain
-```
-Accuracy: 0.976, Used Proxy: 0.406
-```
-This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 40.6% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 97.6% of the records. 
-
 ### Extract Animal
 This example uses PRISM for an open-ended task. It generates a dataset where each record consists of a description of color theory, but an animal name is inserted in the middle of the text. The task for the LLM is to extract the animal name. Run
 ```bash
@@ -100,6 +85,16 @@ Accuracy: 1.0, Used Proxy: 0.57
 ```
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 57% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 100% of the records. 
 
+### Supreme Court Opinion
+This is an example on a real-world dataset, obtained from https://www.courtlistener.com/. Each record in [the dataset](https://github.com/szeighami/PRISM/blob/main/examples/court_opinion.csv) consists of a written Supreme Court opinion, and the task is to determine whether the opinion reverses a lower court ruling. Run 
+```bash
+python court_opinion_example.py
+```
+We obtain
+```
+Accuracy: 0.976, Used Proxy: 0.406
+```
+This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 40.6% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 97.6% of the records. 
 
 ## Defining LLMs to Use
 To use non-OpenAI service providers, or specify your own model calling mechanism even for OpenAI models, you can define your own models. You need to define a `Proxy` and an `Oracle`. `Proxy` is a cheap but potentially inaccurate model you want to use as much as possible, and `Oracle` is the expensive and accurate model whose answers you trust. To do so you need to extend the `Proxy` and `Oracle` classes as follows. First, consider `Proxy`:
