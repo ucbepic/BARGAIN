@@ -63,13 +63,13 @@ oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 Then, to use PRISM, run:
 ```python
 prism = PRISM_A(proxy, oracle, target=0.9, delta=0.1)
-res = prism.process(data)
+res = prism.process(data_records)
 ```
 `PRISM_A` is the main class used for processing (`A` stands for accuracy, see [here](https://github.com/szeighami/PRISM/blob/main/README.md#precision-and-recall-targets) when considering precision or recall metrics). 
 - `target=0.9` means 90% of outputs must match those of the oracle.
 - `delta=0.1` allows a 10% chance the statistical guarantee may fail.
   
-Calling `prism.process(data)` processes the data and returns a list, with `len(res)=len(data)` and `res` contains the LLM output for each data record. 
+Calling `prism.process(data_records)` processes the data and returns a list, with `len(res)=len(data_records)` and `res` contains the LLM output for each data record. 
 
 ---
 
