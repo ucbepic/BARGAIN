@@ -87,6 +87,49 @@ This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 57% of the reco
 
 
 ## Using Other Models
+To use non-OpenAI service providers, or specify your own model calling mechanism even for OpenAI models, you can define your own models. You need to define a `Proxy` and an `Oracle`. `Proxy` is a cheap but potentially inaccurate model you want to use as much as possible, and `Oracle` is the expensive and accurate model whose answers you trust. To do so you need to extend the `Proxy` and `Oracle` classes as follows. First, consider `Proxy`:
+```python
+from PRISM import Proxy
+
+class YourProxy(Proxy):
+    def __init__(self, task:str):
+        super().__init__()
+        self.task = task
+
+    def proxy_func(self, data_record: str) -> Tuple[Any, float]:
+        # Write your LLM call here that applies prompt self.task to data_record and
+        # Generates an output and confidence score (i.e., logprobabilities). Something like:
+        output, confidence_score = CheapLLMCall(self.task, data_record)
+        return output, confidence_score
+```
+The above class extends `Proxy` class and defines its own `proxy_func`. This function processes an input `data_record` with a desired cheap LLM. It produces an `output` which is the cheap LLM's output on `data_record`, and a `confidence_score` that can be computed from logprobabilities of the LLM. We next define an `Oracle`:
+
+```python
+from PRISM import Oracle
+
+class YourOracle(Oracle):
+    def __init__(self, task:str):
+        super().__init__()
+        self.task = task
+
+    def oracle_func(self, data_record: str, proxy_output) -> Tuple[bool, any]:
+        # Write your LLM call here that applies prompt self.task to data_record and
+        # Generates an output. The output is also used to validate if proxy_output is correct. Something like:
+        oracle_output = ExpensiveLLMCall(self.task, data_record)
+        proxy_is_correct = oracle_output == proxy_output
+        # In open-ended settings, you can use LLM as a judge to avoid the equality check above
+        # That is, use LLM as a judge to check if proxy_output is correct, and if not, provide the correct answer
+
+        return proxy_is_correct, oracle_output 
+```
+The above class extends `Oracle` class and defines its own `oracle_func`. This function processes an input `data_record` with an accurate LLM. It evaluates whether the given `proxy_output` is correct, and also returns the correct answer. These user-defined proxy and oracles can be used by PRISM as before:
+```python
+proxy = YourProxy(task)
+oracle = YourOracle(task)
+prism = PRISM_A(proxy, oracle, target=0.9, delta=0.1)
+res = prism.process(data)
+```
+See our [OpenAI models](https://github.com/szeighami/PRISM/blob/main/PRISM/models/GPTModels.py) as examples of defining your proxy and oracle.
 
 ## Precision and Recall Targets
 
