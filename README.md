@@ -47,7 +47,7 @@ task = "Does the text '{}' mention an animal? Respond only with True or False."
 ```
 `data` is a list of strings and `task` is a templatized string. Our goal is to prompt an LLM with `task.format(data_records[i])` for all `i` to obtain whether each data item is an animal or a color.
 
-We do so using PRISM and OpenAI models. OpenAI provides `gpt-4o` and `gpt-4o-mini` for processing. PRISM automatically decides which one to use, while guaranteeing the output matches gpt-4o based on a user-provided accuracy requirement. 
+We use PRISM to do so with OpenAI models. OpenAI provides `gpt-4o` and `gpt-4o-mini` for processing. PRISM automatically decides which one to use, while guaranteeing the output matches gpt-4o based on a user-provided accuracy requirement. 
 
 To use PRISM, first import
 ```python
