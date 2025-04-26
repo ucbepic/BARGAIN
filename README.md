@@ -44,7 +44,7 @@ Then, to use PRISM, run:
 prism = PRISM_A(proxy, oracle, target=0.9, delta=0.1)
 res = prism.process(data)
 ```
-`PRISM_A` is the main class used for processing (`A` stands for accuracy, see here when considering precision or recall metrics). `target` is the accuracy requirement, `target=0.9` means 90% of outputs must match those of the oracle (`gpt-4o` in this example). `delta` is a probability of failure. Our guarantees are statistical, and `delta` specifies the probability that the guarantee may not hold. For example, `target=0.9, delta=0.1` means at least 90% of outputs must match the oracle's outputs at least `1-delta=0.9` percent of the time. 
+`PRISM_A` is the main class used for processing (`A` stands for accuracy, see [here](https://github.com/szeighami/PRISM/blob/main/README.md#precision-and-recall-targets) when considering precision or recall metrics). `target` is the accuracy requirement, `target=0.9` means 90% of outputs must match those of the oracle (`gpt-4o` in this example). `delta` is a probability of failure. Our guarantees are statistical, and `delta` specifies the probability that the guarantee may not hold. For example, `target=0.9, delta=0.1` means at least 90% of outputs must match the oracle's outputs at least `1-delta=0.9` percent of the time. 
 
 Calling `prism.process(data)` processes the data and returns a list, with `len(res)=len(data)` and `res` contains the LLM output for each data record. 
 
