@@ -3,7 +3,7 @@ PRISM helps reduce cost when processing a dataset using LLMs. It automatically d
 
 
 ## Overview
-PRISM follows a _model cascade_ framework. To process a data record with an LLM given a prompt, it first runs the cheap model on the data record. Based on the model's output logprobabilities it decides whether to trust the cheap model or not. If it decides the cheap model's output is inaccurate, it then runs the more expensive model. 
+PRISM follows the _model cascade_ framework. To process a data record with an LLM given a prompt, it first runs the cheap model on the data record. Based on the model's output logprobabilities it decides whether to trust the cheap model or not. If it decides the cheap model's output is inaccurate, it then runs the more expensive model. 
 
 <p align="center">
 <img src="https://github.com/szeighami/PRISM/blob/main/images/PRISM_workflow.png" width="500">
@@ -37,7 +37,7 @@ PRISM refers to the cheap but potentially inaccurate model as _proxy_ and to the
 proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
 oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 ```
-`task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see HERE for an example and discussion of caveats.   
+`task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see HERE for an example.   
 
 Then, to use PRISM, run:
 ```python
@@ -49,7 +49,7 @@ res = prism.process(data)
 Calling `prism.process(data)` processes the data and returns a list, with `len(res)=len(data)` and `res` contains the LLM output for each data record. 
 
 ## Examples
-[examples](https://github.com/szeighami/PRISM/tree/main/examples) folder contains multiple example use-cases. _Run examples from the example directory_.
+[examples](https://github.com/szeighami/PRISM/tree/main/examples) folder contains multiple example use-cases. _Run examples from the examples directory_.
 
 **To run the examples, you must set your OpenAI API key. ** As of this writing, the Color or Animal and Extract Animal examples cost less than 1$, and the Supreme Court Opinion example costs about 10$.
 ### Color or Animal
@@ -68,11 +68,23 @@ This is an example on a real-world dataset, obtained from https://www.courtliste
 ```bash
 python court_opinion_example.py
 ```
-We obtain the output
+We obtain
 ```
 Accuracy: 0.976, Used Proxy: 0.406
 ```
-This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 45% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 95% of the records. 
+This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 40.6% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 97.6% of the records. 
+
+### Extract Animal
+This example uses PRISM for an open-ended task. It generates a dataset where each record consists of a description of color theory, but an animal name is inserted in the middle of the text. The task for the LLM is to extract the animal name. Run
+```bash
+python toy_dataset_extract_animal.py
+```
+We obtain
+```
+Accuracy: 1.0, Used Proxy: 0.57
+```
+This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 57% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 100% of the records. 
+
 
 ## Using Other Models
 
