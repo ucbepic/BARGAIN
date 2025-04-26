@@ -2,7 +2,7 @@ from setuptools import setup
 
 
 setup(
-    name='PRISM',
+    name='ai-prism',
     version='0.1.0',    
     description='PRISM: Low-Cost LLM-Powered Data Processing',
     url='https://github.com/szeighami/prism',
