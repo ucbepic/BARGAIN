@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Dict, Tuple, List
+from typing import Tuple, List, Any
 from tqdm import tqdm
 
 class Proxy():
@@ -10,7 +10,19 @@ class Proxy():
         self.preds_dict={}
         self.verbose=verbose
 
-    def proxy_func(self, input):
+    def proxy_func(self, input: Any) -> Tuple[Any, float]:
+        '''
+        Must extend Proxy class and specifiy this function. This function processes `input` with Proxy. 
+        It returns a tuple, with the first element denoting the output of proxy, and the second element the proxy score
+    
+        Args:
+            input: Data record to be processed by the oracle
+
+        Returns:
+            Tuple[Any, float]:
+                -- Any: The output for `input` computed by proxy model
+                -- float: The proxy score computed for the model
+        '''
         assert False << "SUBCLASS MUST IMPLEMENT"
 
     def reset(self) -> None:
@@ -54,7 +66,20 @@ class Oracle():
             preds.append(oracle_output)
         return np.array(preds)
 
-    def oracle_func(self, input, proxy_output):
+    def oracle_func(self, input: Any, proxy_output: Any) -> Tuple[bool, Any]:
+        '''
+        Must extend Oracle class and specifiy this function. This function checks if a given `proxy_output` is correct for a given `input`. 
+        It returns a tuple, with the first element denoting whether the `proxy_output` is correct, and the second element denotes the correct answer for `input`
+    
+        Args:
+            input: Data record to be processed by the oracle
+            proxy_output: Output provided by the Proxy on `input`. Oracle needs to validate if `proxy_output` is correct
+
+        Returns:
+            Tuple[bool, Any]:
+                -- bool: Whether `proxy_output` is correct for `input` 
+                -- Any: The correct output for `input` (can be the same as `proxy_output`)
+        '''
         assert False << "MUST IMPLEMENT"
 
 
