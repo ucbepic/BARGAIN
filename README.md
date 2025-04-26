@@ -4,7 +4,7 @@ PRISM helps reduce cost when processing a dataset using LLMs. It automatically d
 
 ---
 
-## 📚 Table of Contents
+## Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
@@ -17,7 +17,7 @@ PRISM helps reduce cost when processing a dataset using LLMs. It automatically d
 
 ---
 
-## 🔍 Overview
+## Overview
 PRISM follows the _model cascade_ framework. To process a data record with an LLM given a prompt, it first runs the cheap model on the data record. Based on the model's output logprobabilities it decides whether to trust the cheap model or not. If it decides the cheap model's output is inaccurate, it then runs the more expensive model. 
 
 <p align="center">
@@ -30,7 +30,7 @@ Given an accuracy target `T`, **PRISM guarantees the output matches the expensiv
 
 ---
 
-## ⚙️ Installation
+## Installation
 To install PRISM, run
 ```bash
 pip install ai-prism
@@ -39,7 +39,7 @@ PRISM uses `numpy`, `pandas`, `tqdm`, and `openai` libraries. The `openai` libra
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 Assume you have a dataset you want to process using LLMs with a specific prompt. We consider a toy example here:
 ```python
 data_records= ['zebra', 'monkey', 'red', 'blue', 'lion', 'black']
@@ -73,11 +73,11 @@ Calling `prism.process(data)` processes the data and returns a list, with `len(r
 
 ---
 
-## 💡 Examples
+## Examples
 [examples](https://github.com/szeighami/PRISM/tree/main/examples) folder contains multiple example use-cases. _Run examples from the examples directory_.
 
 > **Note:** To run the examples, you must set your OpenAI API key. As of this writing, the [Color or Animal](https://github.com/szeighami/PRISM/blob/main/README.md#color-or-animal) and [Extract Animal](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal) examples cost less than 1$, and the [Supreme Court Opinion](https://github.com/szeighami/PRISM/blob/main/README.md#supreme-court-opinion) example costs about 10$.
-## 🟣 Color or Animal?
+## Color or Animal?
 This is an extension of the toy example discussed above. Run
 ```bash
 python toy_dataset_color_or_animal.py
@@ -88,7 +88,7 @@ Accuracy: 0.95, Used Proxy: 0.45
 ```
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 45% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 95% of the records. 
 
-### 🐾 Extract Animal Name
+### Extract Animal Name
 This example uses PRISM for an open-ended task. It generates a dataset where each record consists of a description of color theory, but an animal name is inserted in the middle of the text. The task for the LLM is to extract the animal name. Run
 ```bash
 python toy_dataset_extract_animal.py
@@ -99,7 +99,7 @@ Accuracy: 1.0, Used Proxy: 0.57
 ```
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 57% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 100% of the records. 
 
-### ⚖️ Supreme Court Opinion
+### Supreme Court Opinion
 This is an example on a real-world dataset, obtained from https://www.courtlistener.com/. Each record in [the dataset](https://github.com/szeighami/PRISM/blob/main/examples/court_opinion.csv) consists of a written Supreme Court opinion, and the task is to determine whether the opinion reverses a lower court ruling. Run 
 ```bash
 python court_opinion_example.py
@@ -112,7 +112,7 @@ This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 40.6% of the re
 
 ---
 
-## 🧠 Defining LLMs to Use
+## Defining LLMs to Use
 To use non-OpenAI service providers, or specify your own model calling mechanism even for OpenAI models, you can define your own models. You need to define a `Proxy` and an `Oracle`. `Proxy` is a cheap but potentially inaccurate model you want to use as much as possible, and `Oracle` is the expensive and accurate model whose answers you trust. To do so you need to extend the `Proxy` and `Oracle` classes as follows. First, consider `Proxy`:
 ```python
 from PRISM import Proxy
@@ -160,7 +160,7 @@ See our [OpenAI models](https://github.com/szeighami/PRISM/blob/main/PRISM/model
 
 ---
 
-## 🎯 Precision and Recall Targets
+## Precision and Recall Targets
 For binary classification tasks, PRISM also supports specifying a desired precision or recall on the output. PRISM returns a set of indexes of records estimated to have a positive label, and the precision or recall of this set matches the user-specified requirement with high probability. Usage is similar to before, but now we use `PRISM_R` and `PRISM_P` classes to specify recall and precision targets, respectively. For example
 ```python
 prism = PRISM_P(proxy, oracle, delta, target, budget)
