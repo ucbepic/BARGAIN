@@ -1,6 +1,21 @@
 # PRISM: Low-Cost LLM-Powered Data Processing with Guarantees
 PRISM helps reduce cost when processing a dataset using LLMs. It automatically decides when to use a cheap and potentially inaccurate LLM, or an expensive but accurate LLM when processing the data, while providing accuracy guarantees. It maximizes how often the cheap LLM is used while guaranteeing the answer matches the expensive LLM's output based on a user-provided accuracy requirement.  
 
+---
+
+## Table of Contents
+- [Overview](#overview)
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Examples](#examples)
+  - [Color or Animal](#color-or-animal)
+  - [Supreme Court Opinion](#supreme-court-opinion)
+  - [Extract Animal](#extract-animal)
+- [Defining LLMs to Use](#defining-llms-to-use)
+- [Precision and Recall Targets](#precision-and-recall-targets)
+
+---
+
 
 ## Overview
 PRISM follows the _model cascade_ framework. To process a data record with an LLM given a prompt, it first runs the cheap model on the data record. Based on the model's output logprobabilities it decides whether to trust the cheap model or not. If it decides the cheap model's output is inaccurate, it then runs the more expensive model. 
@@ -86,7 +101,7 @@ Accuracy: 1.0, Used Proxy: 0.57
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 57% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 100% of the records. 
 
 
-## Defining Your LLMs to Use
+## Defining LLMs to Use
 To use non-OpenAI service providers, or specify your own model calling mechanism even for OpenAI models, you can define your own models. You need to define a `Proxy` and an `Oracle`. `Proxy` is a cheap but potentially inaccurate model you want to use as much as possible, and `Oracle` is the expensive and accurate model whose answers you trust. To do so you need to extend the `Proxy` and `Oracle` classes as follows. First, consider `Proxy`:
 ```python
 from PRISM import Proxy
