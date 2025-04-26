@@ -37,7 +37,7 @@ PRISM refers to the cheap but potentially inaccurate model as _proxy_ and to the
 proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
 oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 ```
-`task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see HERE for an example.   
+`task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see [this example](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal).   
 
 Then, to use PRISM, run:
 ```python
@@ -51,7 +51,7 @@ Calling `prism.process(data)` processes the data and returns a list, with `len(r
 ## Examples
 [examples](https://github.com/szeighami/PRISM/tree/main/examples) folder contains multiple example use-cases. _Run examples from the examples directory_.
 
-**To run the examples, you must set your OpenAI API key. ** As of this writing, the Color or Animal and Extract Animal examples cost less than 1$, and the Supreme Court Opinion example costs about 10$.
+**To run the examples, you must set your OpenAI API key. ** As of this writing, the [Color or Animal](https://github.com/szeighami/PRISM/blob/main/README.md#color-or-animal) and [Extract Animal](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal) examples cost less than 1$, and the [Supreme Court Opinion](https://github.com/szeighami/PRISM/blob/main/README.md#supreme-court-opinion) example costs about 10$.
 ### Color or Animal
 This is an extension of the toy example discussed above. Run
 ```bash
