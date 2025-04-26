@@ -42,8 +42,8 @@ PRISM uses `numpy`, `pandas`, `tqdm`, and `openai` libraries. The `openai` libra
 ## Getting Started
 Assume you have a dataset you want to process using LLMs with a specific prompt. We consider a toy example here:
 ```python
-data_records= ['zebra', 'monkey', 'red', 'blue', 'lion', 'black']
-task= "Does the text '{}' mention an animal?"
+data_records = ['zebra', 'monkey', 'red', 'blue', 'lion', 'black']
+task = "Does the text '{}' mention an animal?"
 ```
 `data` is a list of strings and `task` is a templatized string. Our goal is to prompt an LLM with `task.format(data_records[i])` for all `i` to obtain whether each data item is an animal or a color.
 
