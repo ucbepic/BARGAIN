@@ -6,9 +6,9 @@ PRISM helps reduce cost when processing a dataset using LLMs. It automatically d
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Examples](#examples)
-  - [Color or Animal](#color-or-animal)
-  - [Extract Animal](#extract-animal)
-  - [Supreme Court Opinion](#supreme-court-opinion)
+  - [Color or Animal?](#color-or-animal)
+  - [Extract Animal Name](#extract-animal-name)
+  - [US Supreme Court Opinion](#supreme-court-opinion)
 - [Defining LLMs to Use](#defining-llms-to-use)
 - [Precision and Recall Targets](#precision-and-recall-targets)
 
@@ -74,7 +74,7 @@ Accuracy: 0.95, Used Proxy: 0.45
 ```
 This means PRISM used the proxy (i.e., `gpt-4o-mini`) to process 45% of the records, but the output matches the oracle's output (i.e., `gpt-4o`) on 95% of the records. 
 
-### Extract Animal
+### Extract Animal Name
 This example uses PRISM for an open-ended task. It generates a dataset where each record consists of a description of color theory, but an animal name is inserted in the middle of the text. The task for the LLM is to extract the animal name. Run
 ```bash
 python toy_dataset_extract_animal.py
