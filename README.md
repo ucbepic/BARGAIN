@@ -122,7 +122,7 @@ class YourOracle(Oracle):
 
         return proxy_is_correct, oracle_output 
 ```
-The above class extends `Oracle` class and defines its own `oracle_func`. This function processes an input `data_record` with an accurate LLM. It evaluates whether the given `proxy_output` is correct, and also returns the correct answer. These user-defined proxy and oracles can be used by PRISM as before:
+The above class extends `Oracle` class and defines its own `oracle_func`. This function processes an input `data_record` with an accurate LLM. It evaluates whether the given `proxy_output` is correct, and also returns the correct answer. The user-defined proxy and oracle can be used by PRISM as before:
 ```python
 proxy = YourProxy(task)
 oracle = YourOracle(task)
@@ -132,4 +132,18 @@ res = prism.process(data)
 See our [OpenAI models](https://github.com/szeighami/PRISM/blob/main/PRISM/models/GPTModels.py) as examples of defining your proxy and oracle.
 
 ## Precision and Recall Targets
+For binary classification tasks, PRISM supports specifying a desired precision or recall on the output. In such settings, PRISM returns a set of indexes of records estimated to have a positive label, and the precision or recall of this set matches the user-specified requirement with high probability. The use-case is similar to before, but now we use `PRISM_R` and `PRISM_P` classes to specify recall and precision targets, respectively. For example
+```python
+prism = PRISM_P(proxy, oracle, delta, target, budget)
+est_positive_indx = prism.process(data)
+```
+In this setting PRISM additionally takes a pre-specified `budget` as input. It performs at most `budget` number of oracle calls, but returns an output with _precision_ at least `target` with probability at least `1-delta` with the goal of maximizing _recall_. If given a recall target:
+```python
+prism = PRISM_R(proxy, oracle, delta, target, budget)
+est_positive_indx = prism.process(data)
+```
+PRISM performs at most `budget` number of oracle calls, but returns an output with _recall_ at least `target` with probability at least `1-delta` with the goal of maximizing _precision_. 
+
+If you specify your own `Proxy` and `Oracle`, both proxy and oracle outputs must be boolean to use `PRISM_R` or `PRISM_P`.
+
 
