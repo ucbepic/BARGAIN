@@ -10,7 +10,7 @@ class Proxy():
         self.preds_dict={}
         self.verbose=verbose
 
-    def proxy_func(self, input: Any) -> Tuple[Any, float]:
+    def proxy_func(self, input: str) -> Tuple[Any, float]:
         '''
         Must extend Proxy class and specifiy this function. This function processes `input` with Proxy. 
         It returns a tuple, with the first element denoting the output of proxy, and the second element the proxy score
@@ -66,7 +66,7 @@ class Oracle():
             preds.append(oracle_output)
         return np.array(preds)
 
-    def oracle_func(self, input: Any, proxy_output: Any) -> Tuple[bool, Any]:
+    def oracle_func(self, input: str, proxy_output: Any) -> Tuple[bool, Any]:
         '''
         Must extend Oracle class and specifiy this function. This function checks if a given `proxy_output` is correct for a given `input`. 
         It returns a tuple, with the first element denoting whether the `proxy_output` is correct, and the second element denotes the correct answer for `input`
