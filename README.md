@@ -58,7 +58,7 @@ PRISM refers to the cheap but potentially inaccurate model as _proxy_ and to the
 proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
 oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 ```
-`task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see [this example](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal).   
+`task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see [this example](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal-name).   
 
 Then, to use PRISM, run:
 ```python
