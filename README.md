@@ -51,7 +51,7 @@ We do so using PRISM and OpenAI models. OpenAI provides `gpt-4o` and `gpt-4o-min
 
 To use PRISM, first import
 ```python
-from PRISM import OpenAIProxy, OpenAIOracle PRISM_A
+from PRISM import OpenAIProxy, OpenAIOracle, PRISM_A
 ```
 PRISM refers to the cheap but potentially inaccurate model as _proxy_ and to the expensive but accurate model as _oracle_. Here, for OpenAI models, `gpt-4o` is our oracle and `gpt-4o-mini` is our proxy. We first define them below
 ```python
