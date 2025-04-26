@@ -59,6 +59,7 @@ proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
 oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 ```
 `task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see [this example](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal-name).   
+> **Note:** If you set `is_binary=True` you should instruct the model in your `task` prompt to only provide `True` or `False` outputs.
 
 Then, to use PRISM, run:
 ```python
@@ -76,7 +77,7 @@ Calling `prism.process(data_records)` processes the data and returns a list, wit
 ## Examples
 [examples](https://github.com/szeighami/PRISM/tree/main/examples) folder contains multiple example use-cases. _Run examples from the examples directory_.
 
-> **Note:** To run the examples, you must set your OpenAI API key. As of this writing, the [Color or Animal](https://github.com/szeighami/PRISM/blob/main/README.md#color-or-animal) and [Extract Animal Name](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal-name) examples cost less than 1$, and the [Supreme Court Opinion](https://github.com/szeighami/PRISM/blob/main/README.md#supreme-court-opinion) example costs about 10$.
+> **Note:** To run the examples, you must set your OpenAI API key. 
 ## Color or Animal?
 This is an extension of the toy example discussed above. Run
 ```bash
@@ -173,6 +174,6 @@ est_positive_indx = prism.process(data)
 ```
 PRISM performs at most `budget` number of oracle calls, but returns an output with _recall_ at least `target` with probability at least `1-delta` with the goal of maximizing _precision_. 
 
-If you specify your own `Proxy` and `Oracle`, both proxy and oracle outputs must be boolean to use `PRISM_R` or `PRISM_P`.
+> **Note:** If you specify your own `Proxy` and `Oracle`, both proxy and oracle outputs must be boolean to use `PRISM_R` or `PRISM_P`.
 
 
