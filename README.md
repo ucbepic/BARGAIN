@@ -6,6 +6,7 @@ PRISM helps reduce cost when processing a dataset using LLMs. It automatically d
 
 ## Table of Contents
 - [Overview](#overview)
+- [Why PRISM?](#why-prism)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Examples](#examples)
