@@ -70,7 +70,7 @@ PRISM refers to the cheap but potentially inaccurate model as _proxy_ and to the
 proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
 oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 ```
-`task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see [this example](https://github.com/szeighami/PRISM/blob/main/README.md#extract-animal-name).   
+`task` is the templatized string defined above, `model` is the name of the model to use and `is_binary` denotes whether the task is a binary classification task (as is in our case). You can use PRISM for non-binary classification or open-ended tasks as well, see [this example](#extract-animal-name).   
 > **Note:** If you set `is_binary=True` you should instruct the model in your `task` prompt to only provide `True` or `False` outputs.
 
 Then, to use PRISM, run:
@@ -78,7 +78,7 @@ Then, to use PRISM, run:
 prism = PRISM_A(proxy, oracle, target=0.9, delta=0.1)
 res = prism.process(data_records)
 ```
-`PRISM_A` is the main class used for processing (`A` stands for accuracy, see [here](https://github.com/szeighami/PRISM/blob/main/README.md#precision-and-recall-targets) when considering precision or recall metrics). 
+`PRISM_A` is the main class used for processing (`A` stands for accuracy, see [here](#precision-and-recall-targets) when considering precision or recall metrics). 
 - `target=0.9` means 90% of outputs must match those of the oracle.
 - `delta=0.1` allows a 10% chance the statistical guarantee may fail.
   
