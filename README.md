@@ -30,6 +30,17 @@ Given an accuracy target `T`, **PRISM guarantees the output matches the expensiv
 
 ---
 
+## Why PRISM?
+PRISM reduces costs while providing theoretical guarantees, unlike systems such as [FrugalGPT](https://arxiv.org/abs/2305.05176) that don't provide any guarantees. Other approaches, such as [SUPG](https://arxiv.org/abs/2004.00827), provide weaker guarantees and worse utility: they use the expensive LLM much more than needed to provide a weaker accuracy guarantee than PRISM. SUPG's guarantees only hold asymptotically and in the limit but PRISM's hold for any sample size. PRISM provides these benefits through an improved sampling process (PRISM performs adaptive sampling) and better estimation of the LLM's accuracy (PRISM uses [recent statistical tools](https://arxiv.org/abs/2010.09686) for estimation). 
+
+The figure below shows our experimental study comparing SUPG with PRISM across 8 different real-world datasets. The results show the number of expensive LLM calls avoided, averaged across the datasets. PRISM significantly reduces cost compared with SUPG. The figure also shows a naive method that provides the same guarantees as PRISM with a naive sampling and estimation process (using uniform sampling and Hoeffding's inequality for estimation).    
+
+<p align="center">
+<img src="https://github.com/szeighami/PRISM/blob/main/images/results.png" width="300">
+</p>
+
+---
+
 ## Installation
 To install PRISM, run
 ```bash
