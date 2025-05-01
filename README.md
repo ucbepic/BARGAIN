@@ -1,7 +1,7 @@
 # <picture>  <source media="(prefers-color-scheme: dark)" srcset="images/title_dark.png" width="650" alt="BARGAIN: Guaranteed Accurate AI for Less"> <source media="(prefers-color-scheme: light)" srcset="images/title_light.png" width="650" alt="BARGAIN: Guaranteed Accurate AI for Less"> <img src="images/title_light" alt="BARGAIN: Guaranteed Accurate AI for Less" width="650"> </picture>
 
 
-BARGAIN helps reduce cost when processing a dataset using LLMs. It automatically decides when to use a cheap and potentially inaccurate LLM, or an expensive but accurate LLM when processing the data, while providing accuracy guarantees. It maximizes how often the cheap LLM is used while guaranteeing the answer matches the expensive LLM's output based on a user-provided accuracy requirement.  
+BARGAIN helps reduce cost when processing a dataset using LLMs. It automatically decides whether to use a cheap and potentially inaccurate LLM or an expensive but accurate LLM for each data record. It maximizes how often the cheap LLM is used to reduce cost. At the same time, it guarantees the answer matches the expensive LLM's output based on a user-provided accuracy requirement.  
 
 
 ---
