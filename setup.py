@@ -2,14 +2,14 @@ from setuptools import setup
 
 
 setup(
-    name='ai-prism',
+    name='bargain',
     version='0.1.0',    
-    description='PRISM: Low-Cost LLM-Powered Data Processing',
-    url='https://github.com/szeighami/prism',
+    description='BARGAIN: Guaranteed Accurate AI for Less',
+    url='https://github.com/szeighami/BARGAIN',
     author='Sepanta Zeighami',
     author_email='zeighami@berkeley.edu',
     license='MIT',
-    packages=['PRISM', 'PRISM.process', 'PRISM.bounds', 'PRISM.models', 'PRISM.sampler'],
+    packages=['BARGAIN', 'BARGAIN.process', 'BARGAIN.bounds', 'BARGAIN.models', 'BARGAIN.sampler'],
     install_requires=['pandas',
                       'numpy',                     
                       'tqdm',                     

@@ -1,5 +1,5 @@
-from PRISM import OpenAIProxy, OpenAIOracle
-from PRISM import PRISM_A
+from BARGAIN import OpenAIProxy, OpenAIOracle
+from BARGAIN import BARGAIN_A
 from generate_toy_data import generate_color_or_animal_data
 
 # Define Data and Task
@@ -16,9 +16,9 @@ task = '''
 proxy = OpenAIProxy(task, model='gpt-4o-mini')
 oracle = OpenAIOracle(task, model='gpt-4o')
 
-# Call PRISM to process
-prism = PRISM_A(proxy, oracle, target=0.9,  delta=0.1, seed=0)
-df['output'] = prism.process(df['value'].to_numpy())
+# Call BARGAIN to process
+bargain = BARGAIN_A(proxy, oracle, target=0.9,  delta=0.1, seed=0)
+df['output'] = bargain.process(df['value'].to_numpy())
 
 # Evaluate output 
 df['is_correct'] = df['animal_name'] == df['output']

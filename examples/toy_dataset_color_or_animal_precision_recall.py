@@ -1,8 +1,8 @@
 
 import pandas as pd
 
-from PRISM import OpenAIProxy, OpenAIOracle
-from PRISM import PRISM_P, PRISM_R
+from BARGAIN import OpenAIProxy, OpenAIOracle
+from BARGAIN import BARGAIN_P, BARGAIN_R
 from generate_toy_data import generate_color_or_animal_data
 
 def precision(indexes, labels, pred_indexes):
@@ -26,9 +26,9 @@ def test_given_precision_requirement(data_df, task, k, target, delta):
     proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
     oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 
-    # Call PRISM to process
-    prism = PRISM_P(proxy, oracle, delta, target, k, seed=0)
-    est_positive_indx = prism.process(data_df['value'].to_numpy())
+    # Call BARGAIN to process
+    bargain = BARGAIN_P(proxy, oracle, delta, target, k, seed=0)
+    est_positive_indx = bargain.process(data_df['value'].to_numpy())
 
     # Evalute
     est_precision = precision(data_df['id'].to_numpy(), data_df['is_animal'].to_numpy(), est_positive_indx)
@@ -41,9 +41,9 @@ def test_given_recall_requirement(data_df, task, k, target, delta):
     proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
     oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 
-    # Call PRISM to process
-    prism = PRISM_R(proxy, oracle, delta, target, k, seed=0)
-    est_positive_indx = prism.process(data_df['value'].to_numpy())
+    # Call BARGAIN to process
+    bargain = BARGAIN_R(proxy, oracle, delta, target, k, seed=0)
+    est_positive_indx = bargain.process(data_df['value'].to_numpy())
 
     # Evalute
     est_precision = precision(data_df['id'].to_numpy(), data_df['is_animal'].to_numpy(), est_positive_indx)

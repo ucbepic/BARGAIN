@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from PRISM import OpenAIProxy, OpenAIOracle
-from PRISM import PRISM_A
+from BARGAIN import OpenAIProxy, OpenAIOracle
+from BARGAIN import BARGAIN_A
 
 # Define Data and Task
 task = ''' 
@@ -23,9 +23,9 @@ df = pd.read_csv(f'court_opinion.csv')
 proxy = OpenAIProxy(task, model='gpt-4o-mini', is_binary=True)
 oracle = OpenAIOracle(task, model='gpt-4o', is_binary=True)
 
-# Call PRISM to process
-prism = PRISM_A(proxy, oracle, target=0.9, delta=0.1, seed=0)
-output, used_oracle = prism.process(df['opinion_text'].to_numpy(), return_oracle_usage=True)
+# Call BARGAIN to process
+bargain = BARGAIN_A(proxy, oracle, target=0.9, delta=0.1, seed=0)
+output, used_oracle = bargain.process(df['opinion_text'].to_numpy(), return_oracle_usage=True)
 df['output'] = output
 df['used_oracle'] = used_oracle
 used_proxy_count = 1-df['used_oracle'].mean()
