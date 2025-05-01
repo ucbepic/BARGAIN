@@ -24,7 +24,7 @@ BARGAIN helps reduce cost when processing a dataset using LLMs. It automatically
 BARGAIN follows the _model cascade_ framework. To process a data record with an LLM given a prompt, it first runs the cheap model on the data record. Based on the model's output logprobabilities it decides whether to trust the cheap model or not. If it decides the cheap model's output is inaccurate, it then runs the more expensive model. 
 
 <p align="center">
-<img src="images/PRISM_workflow.png" width="500">
+<img src="images/workflow.png" width="500">
 </p>
 
 To decide whether to trust the cheap model, BARGAIN uses a _cascade threshold_: if the cheap model's output logprobability is more than the cascade threshold, BARGAIN uses the cheap model's output. This cascade threshold is determined in a preprocessing step to provide theoretical guarantees. 
