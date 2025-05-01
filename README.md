@@ -47,7 +47,7 @@ The figure below shows our experimental study comparing SUPG with BARGAIN across
 ## Installation
 To install BARGAIN, run
 ```bash
-pip install ai-prism
+pip install bargain
 ```
 BARGAIN uses `numpy`, `pandas`, `tqdm`, and `openai` libraries. The `openai` library is optional and can be replaced with other service providers.
 
