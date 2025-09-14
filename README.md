@@ -1,7 +1,7 @@
 # <picture>  <source media="(prefers-color-scheme: dark)" srcset="images/title_dark.png" width="650" alt="BARGAIN: Guaranteed Accurate AI for Less"> <source media="(prefers-color-scheme: light)" srcset="images/title_light.png" width="650" alt="BARGAIN: Guaranteed Accurate AI for Less"> <img src="images/title_light" alt="BARGAIN: Guaranteed Accurate AI for Less" width="650"> </picture>
 
 
-BARGAIN helps reduce cost when processing a dataset using LLMs. It automatically decides whether to use a cheap and potentially inaccurate LLM or an expensive but accurate LLM for each data record. It maximizes how often the cheap LLM is used to reduce cost. At the same time, it guarantees the answer matches the expensive LLM's output based on a user-provided accuracy requirement.  
+BARGAIN helps reduce cost when processing a dataset using LLMs. It automatically decides whether to use a cheap and potentially inaccurate LLM or an expensive but accurate LLM for each data record. It maximizes how often the cheap LLM is used to reduce cost. At the same time, it guarantees the answer matches the expensive LLM's output based on a user-provided accuracy requirement. BARGAIN is presented in our SIGMOD'26 paper [Cut Costs, Not Accuracy: LLM-Powered Data Processing with Guarantees](https://arxiv.org/pdf/2509.02896).
 
 
 ---
@@ -17,6 +17,7 @@ BARGAIN helps reduce cost when processing a dataset using LLMs. It automatically
   - [US Supreme Court Opinion](#supreme-court-opinion)
 - [Defining LLMs to Use](#defining-llms-to-use)
 - [Precision and Recall Targets](#precision-and-recall-targets)
+- [References and Citation](#references-and-citation)
 
 ---
 
@@ -190,4 +191,13 @@ BARGAIN performs at most `budget` number of oracle calls, but returns an output 
 
 > **Note:** If you specify your own `Proxy` and `Oracle`, both proxy and oracle outputs must be boolean to use `BARGAIN_R` or `BARGAIN_P`.
 
+# References and Citation
+[Sepanta Zeighami, Shreya Shankar, and Aditya Parameswaran. "Cut Costs, Not Accuracy: LLM-Powered Data Processing with Guarantees." (SIGMOD'26)](https://arxiv.org/pdf/2509.02896)
+
+@article{zeighami2025bargain,
+  title={Cut Costs, Not Accuracy: LLM-Powered Data Processing with Guarantees},
+  author={Zeighami, Sepanta and Shankar, Shreya and Parameswaran, Aditya},
+  journal={arXiv preprint arXiv:2509.02896},
+  year={2025}
+}
 
