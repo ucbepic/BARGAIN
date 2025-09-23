@@ -219,7 +219,8 @@ class BARGAIN_R():
 
         sampled_indexes = np.random.choice(np.arange(begin_n, len(data_idxs)), est_budget+budget_left)
         sample_data_idxs = data_idxs[sampled_indexes]
-        sampled_labels = self.oracle.get_pred(sample_data_idxs)
+        sample_data_records = data_records[sampled_indexes]
+        sampled_labels = self.oracle.get_pred(sample_data_records, sample_data_idxs)
 
         est_delta = est_delta+delta_left
         curr_positives = sampled_indexes[sampled_labels  == True]

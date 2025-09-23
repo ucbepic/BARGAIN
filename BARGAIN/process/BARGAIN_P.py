@@ -146,7 +146,8 @@ class BARGAIN_P():
         set_ids = data_idxs[:best_thresh]
         sample_indexes = np.unique(np.array(sample_indexes).astype(int))
         all_sample_indexs = data_idxs[sample_indexes]
-        all_sample_labels = self.oracle.get_pred(all_sample_indexs)
+        all_sample_records = data_records[sample_indexes]
+        all_sample_labels = self.oracle.get_pred(all_sample_records, all_sample_indexs)
         samp_inds = data_idxs[sample_indexes[all_sample_labels==1]]
         all_inds = np.unique( np.concatenate([set_ids, samp_inds]))
         return all_inds.tolist()
