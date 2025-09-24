@@ -33,7 +33,7 @@ def __k_plus(obs, target, alpha, trunc_scale, theta, without_replacement=False, 
 def __k_minus(obs, target, alpha, trunc_scale, theta, without_replacement=False, N=0, fixed_sample_size=True):
     if without_replacement:
         assert N>0
-        m_wor_i = np.concat([np.array([target]), (N*target-np.cumsum(obs[:-1]))/(N-(np.arange(len(obs)-1)))])
+        m_wor_i = np.concatenate([np.array([target]), (N*target-np.cumsum(obs[:-1]))/(N-(np.arange(len(obs)-1)))])
     else:
         m_wor_i = np.repeat(target,len(obs))
 
