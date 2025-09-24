@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='bargain',
-    version='0.1.0',    
+    version='0.1.1',    
     description='BARGAIN: Guaranteed Accurate AI for Less',
     url='https://github.com/szeighami/BARGAIN',
     author='Sepanta Zeighami',
