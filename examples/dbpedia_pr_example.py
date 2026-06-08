@@ -9,7 +9,7 @@ from BARGAIN import BARGAIN_PR
 # DBpedia has 14 classes; we frame as binary: "Company" (class 0) vs everything else
 ds = load_dataset('fancyzhx/dbpedia_14', split='test')
 np.random.seed(42)
-idxs = np.random.choice(len(ds), 400, replace=False)
+idxs = np.random.choice(len(ds), 1000, replace=False)
 texts = [ds[int(i)]['content'][:2000] for i in idxs]
 labels = [1 if ds[int(i)]['label'] == 0 else 0 for i in idxs]  # Company = positive
 print(f"Using {len(texts)} DBpedia articles ({sum(labels)} Company, {len(labels)-sum(labels)} other)")
