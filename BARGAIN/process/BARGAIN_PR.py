@@ -345,15 +345,7 @@ class BARGAIN_PR():
                 )
 
         # Phase 3: Final classification
-        positive_sorted_indices = set()
-
-        # Accept region: use oracle label if available, otherwise accept
-        for i in range(t_P, n):
-            if i in labeled:
-                if labeled[i] == 1:
-                    positive_sorted_indices.add(i)
-            else:
-                positive_sorted_indices.add(i)
+        positive_sorted_indices = set(range(t_P, n))
 
         # Between t_R and t_P: label with oracle
         to_label_oracle = [i for i in range(t_R, t_P) if i not in labeled]
