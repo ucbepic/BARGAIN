@@ -7,7 +7,7 @@ from BARGAIN import BARGAIN_PR
 
 
 # Yelp polarity: binary sentiment (1 = positive, 2 = positive in the dataset)
-ds = load_dataset('fancyzhx/yelp_review_full', split='test')
+ds = load_dataset('Yelp/yelp_review_full', split='test')
 np.random.seed(42)
 idxs = np.random.choice(len(ds), 400, replace=False)
 texts = [ds[int(i)]['text'][:2000] for i in idxs]
