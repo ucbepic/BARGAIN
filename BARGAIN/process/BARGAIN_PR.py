@@ -354,6 +354,11 @@ class BARGAIN_PR():
             if labeled[i] == 1:
                 positive_sorted_indices.add(i)
 
+        # Include oracle-labeled positives below t_R found during sampling
+        for i in range(0, t_R):
+            if i in labeled and labeled[i] == 1:
+                positive_sorted_indices.add(i)
+
         if len(positive_sorted_indices) == 0:
             return []
 

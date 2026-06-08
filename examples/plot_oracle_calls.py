@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from datasets import load_dataset
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from BARGAIN import OpenAIProxy, OpenAIOracle
 from BARGAIN import BARGAIN_PR
@@ -71,13 +72,9 @@ You must respond with ONLY True or False:
     },
 }
 
-results = {}
 
-for ds_name, cfg in datasets_config.items():
-    print(f"\n{'='*60}")
-    print(f"Dataset: {ds_name}")
-    print(f"{'='*60}")
-
+def run_dataset(ds_name, cfg):
+    print(f"[{ds_name}] Loading dataset...")
     ds = cfg['load']()
     np.random.seed(42)
     idxs = np.random.choice(len(ds), cfg['n'], replace=False)
@@ -88,21 +85,21 @@ for ds_name, cfg in datasets_config.items():
     proxy = OpenAIProxy(cfg['task'], model='gpt-4o-mini', is_binary=True)
     oracle = OpenAIOracle(cfg['task'], model='gpt-4o', is_binary=True)
 
-    print("Warming proxy cache...")
+    print(f"[{ds_name}] Warming proxy cache...")
     proxy.get_preds_and_scores(data_idxs, texts_arr)
     saved_proxy_cache = dict(proxy.preds_dict)
-    print(f"Proxy cache warmed: {len(saved_proxy_cache)} entries")
+    print(f"[{ds_name}] Proxy done ({len(saved_proxy_cache)} entries)")
 
-    print("Warming oracle cache (labeling all records)...")
+    print(f"[{ds_name}] Warming oracle cache...")
     oracle_labels = oracle.get_pred(texts_arr, data_idxs)
-    print(f"Oracle labels: {int(oracle_labels.sum())} positive, {int((1 - oracle_labels).sum())} negative")
+    n_pos = int(oracle_labels.sum())
+    print(f"[{ds_name}] Oracle done ({n_pos} positive, {len(texts) - n_pos} negative)")
 
     oracle_calls_list = []
     precisions = []
     recalls = []
 
     for target in targets:
-        print(f"\n  target={target}")
         proxy.preds_dict = dict(saved_proxy_cache)
         proxy.reset = lambda: None
         oracle.reset()
@@ -115,27 +112,40 @@ for ds_name, cfg in datasets_config.items():
         if len(est_positive_idxs) == 0:
             prec = 1.0
         else:
-            prec = oracle_labels[est_positive_idxs].mean()
+            prec = float(oracle_labels[est_positive_idxs].mean())
 
         total_pos = oracle_labels.sum()
-        rec = oracle_labels[est_positive_idxs].sum() / total_pos if total_pos > 0 else 1.0
+        rec = float(oracle_labels[est_positive_idxs].sum() / total_pos) if total_pos > 0 else 1.0
 
         precisions.append(prec)
         recalls.append(rec)
-        print(f"    oracle calls: {oc}/{len(texts)}, prec={prec:.3f}, rec={rec:.3f}, returned={len(est_positive_idxs)}")
+        print(f"[{ds_name}] target={target}: oracle={oc}/{len(texts)}, prec={prec:.3f}, rec={rec:.3f}")
 
-    results[ds_name] = {
+    return ds_name, {
         'oracle_calls': oracle_calls_list,
         'precisions': precisions,
         'recalls': recalls,
         'n': cfg['n'],
     }
 
+
+results = {}
+with ThreadPoolExecutor(max_workers=4) as executor:
+    futures = {executor.submit(run_dataset, name, cfg): name for name, cfg in datasets_config.items()}
+    for future in as_completed(futures):
+        ds_name, result = future.result()
+        results[ds_name] = result
+        print(f"[{ds_name}] COMPLETE")
+
+# Maintain consistent order for plotting
+plot_order = [name for name in datasets_config if name in results]
+
 fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 markers = ['o', 's', '^', 'D']
 
 ax = axes[0]
-for i, (ds_name, r) in enumerate(results.items()):
+for i, ds_name in enumerate(plot_order):
+    r = results[ds_name]
     fractions = [c / r['n'] for c in r['oracle_calls']]
     ax.plot(targets, fractions, marker=markers[i], label=ds_name, linewidth=2, markersize=8)
 ax.set_xlabel('Target', fontsize=12)
@@ -147,7 +157,8 @@ ax.set_xticks(targets)
 ax.grid(True, alpha=0.3)
 
 ax = axes[1]
-for i, (ds_name, r) in enumerate(results.items()):
+for i, ds_name in enumerate(plot_order):
+    r = results[ds_name]
     ax.plot(targets, r['precisions'], marker=markers[i], label=ds_name, linewidth=2, markersize=8)
 ax.plot(targets, targets, 'k--', alpha=0.4, label='y=target')
 ax.set_xlabel('Target', fontsize=12)
@@ -159,7 +170,8 @@ ax.set_xticks(targets)
 ax.grid(True, alpha=0.3)
 
 ax = axes[2]
-for i, (ds_name, r) in enumerate(results.items()):
+for i, ds_name in enumerate(plot_order):
+    r = results[ds_name]
     ax.plot(targets, r['recalls'], marker=markers[i], label=ds_name, linewidth=2, markersize=8)
 ax.plot(targets, targets, 'k--', alpha=0.4, label='y=target')
 ax.set_xlabel('Target', fontsize=12)
