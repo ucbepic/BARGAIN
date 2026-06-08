@@ -52,22 +52,19 @@ oracle_calls_during = oracle.get_number_preds()
 print(f"\nOracle calls during BARGAIN_PR: {oracle_calls_during}")
 print(f"Returned {len(est_positive_idxs)} positive indices")
 
-# Evaluate with ground truth labels
+print("\nRunning oracle on all records for evaluation...")
 all_idxs = np.arange(len(texts))
-gt_labels = np.array(labels)
+all_labels = oracle.get_pred(np.array(texts), all_idxs)
 
 if len(est_positive_idxs) == 0:
     est_prec = 1.0
 else:
-    est_prec = gt_labels[est_positive_idxs].mean()
+    est_prec = all_labels[est_positive_idxs].mean()
 
-total_pos = gt_labels.sum()
-if total_pos == 0:
-    est_rec = 1.0
-else:
-    est_rec = gt_labels[est_positive_idxs].sum() / total_pos
+total_pos = all_labels.sum()
+est_rec = all_labels[est_positive_idxs].sum() / total_pos if total_pos > 0 else 1.0
 
 print(f"\nResults (target={target}, delta={delta}):")
-print(f"  Precision: {est_prec:.3f}")
-print(f"  Recall:    {est_rec:.3f}")
+print(f"  Precision (oracle): {est_prec:.3f}")
+print(f"  Recall (oracle):    {est_rec:.3f}")
 print(f"  Oracle calls during process: {oracle_calls_during}/{len(texts)}")
