@@ -92,6 +92,7 @@ def run_dataset(ds_name, cfg):
 
     print(f"[{ds_name}] Warming oracle cache...")
     oracle_labels = oracle.get_pred(texts_arr, data_idxs)
+    saved_oracle_cache = dict(oracle.preds_dict)
     n_pos = int(oracle_labels.sum())
     print(f"[{ds_name}] Oracle done ({n_pos} positive, {len(texts) - n_pos} negative)")
 
@@ -102,11 +103,20 @@ def run_dataset(ds_name, cfg):
     for target in targets:
         proxy.preds_dict = dict(saved_proxy_cache)
         proxy.reset = lambda: None
-        oracle.reset()
+        oracle.preds_dict = dict(saved_oracle_cache)
+        oracle.reset = lambda: None
+        queried = set()
+        _orig_get_pred = type(oracle).get_pred
+        def _tracking_get_pred(self_oracle, data_records, indxs=None):
+            if indxs is not None:
+                for idx in indxs:
+                    queried.add(int(idx))
+            return _orig_get_pred(self_oracle, data_records, indxs)
+        oracle.get_pred = lambda *a, **kw: _tracking_get_pred(oracle, *a, **kw)
 
         bargain = BARGAIN_PR(proxy, oracle, delta=delta, target=target, W=50, seed=0, verbose=False)
         est_positive_idxs = bargain.process(texts)
-        oc = oracle.get_number_preds()
+        oc = len(queried)
         oracle_calls_list.append(oc)
 
         if len(est_positive_idxs) == 0:
