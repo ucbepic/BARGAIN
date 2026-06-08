@@ -351,11 +351,6 @@ class BARGAIN_PR():
             if labeled[i] == 1:
                 positive_sorted_indices.add(i)
 
-        # Below t_R: include already-labeled positives from sampling phases
-        for i in range(0, t_R):
-            if i in labeled and labeled[i] == 1:
-                positive_sorted_indices.add(i)
-
         if len(positive_sorted_indices) == 0:
             return []
 
