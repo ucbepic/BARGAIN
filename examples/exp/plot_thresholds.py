@@ -1,3 +1,5 @@
+import os
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -9,6 +11,8 @@ from BARGAIN import BARGAIN_PR
 
 targets = [0.75, 0.85, 0.90, 0.95, 0.99]
 delta = 0.1
+CACHE_DIR = os.path.join(os.path.dirname(__file__), '.cache')
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 datasets_config = {
     'AG News (400)': {
@@ -74,28 +78,61 @@ You must respond with ONLY True or False:
 }
 
 
+def _cache_key(ds_name):
+    return ds_name.replace(' ', '_').replace('(', '').replace(')', '').lower()
+
+
 def run_dataset(ds_name, cfg):
-    print(f"[{ds_name}] Loading...")
-    ds = cfg['load']()
-    np.random.seed(42)
-    idxs = np.random.choice(len(ds), cfg['n'], replace=False)
-    texts = [cfg['text_fn'](ds, i) for i in idxs]
-    data_idxs = np.arange(len(texts))
-    texts_arr = np.array(texts)
+    cache_file = os.path.join(CACHE_DIR, f'{_cache_key(ds_name)}.pkl')
+
+    if os.path.exists(cache_file):
+        print(f"[{ds_name}] Loading from disk cache...")
+        with open(cache_file, 'rb') as f:
+            cached = pickle.load(f)
+        texts = cached['texts']
+        saved_proxy_cache = cached['proxy_cache']
+        saved_oracle_cache = cached['oracle_cache']
+        print(f"[{ds_name}] Cache loaded")
+    else:
+        print(f"[{ds_name}] Loading dataset...")
+        ds = cfg['load']()
+        np.random.seed(42)
+        idxs = np.random.choice(len(ds), cfg['n'], replace=False)
+        texts = [cfg['text_fn'](ds, i) for i in idxs]
+        data_idxs = np.arange(len(texts))
+        texts_arr = np.array(texts)
+
+        proxy = OpenAIProxy(cfg['task'], model='gpt-4o-mini', is_binary=True)
+        oracle = OpenAIOracle(cfg['task'], model='gpt-4o', is_binary=True)
+
+        print(f"[{ds_name}] Warming proxy cache...")
+        proxy.get_preds_and_scores(data_idxs, texts_arr)
+        saved_proxy_cache = dict(proxy.preds_dict)
+        print(f"[{ds_name}] Proxy done")
+
+        print(f"[{ds_name}] Warming oracle cache...")
+        oracle_labels = oracle.get_pred(texts_arr, data_idxs)
+        saved_oracle_cache = dict(oracle.preds_dict)
+        print(f"[{ds_name}] Oracle done")
+
+        with open(cache_file, 'wb') as f:
+            pickle.dump({
+                'texts': texts,
+                'proxy_cache': saved_proxy_cache,
+                'oracle_cache': saved_oracle_cache,
+                'oracle_labels': oracle_labels,
+            }, f)
+        print(f"[{ds_name}] Saved to disk cache")
 
     proxy = OpenAIProxy(cfg['task'], model='gpt-4o-mini', is_binary=True)
     oracle = OpenAIOracle(cfg['task'], model='gpt-4o', is_binary=True)
-
-    print(f"[{ds_name}] Proxy cache...")
-    proxy.get_preds_and_scores(data_idxs, texts_arr)
-    saved_proxy_cache = dict(proxy.preds_dict)
-    print(f"[{ds_name}] Proxy done")
 
     thresholds = []
     for target in targets:
         proxy.preds_dict = dict(saved_proxy_cache)
         proxy.reset = lambda: None
-        oracle.reset()
+        oracle.preds_dict = dict(saved_oracle_cache)
+        oracle.reset = lambda: None
 
         bargain = BARGAIN_PR(proxy, oracle, delta=delta, target=target, W=50, seed=0, verbose=False)
         bargain.process(texts)
