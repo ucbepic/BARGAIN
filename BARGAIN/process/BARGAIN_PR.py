@@ -19,6 +19,7 @@ class BARGAIN_PR():
         target: float = 0.9,
         W: int = 50,
         M: int = 20,
+        sample_step: int = 10,
         verbose: bool = True,
         seed: int = 0
     ):
@@ -30,6 +31,7 @@ class BARGAIN_PR():
             target: Desired precision and recall target, float between 0 and 1
             W: Sliding window size for precision threshold search
             M: Number of thresholds for BARGAIN fallback precision search
+            sample_step: Number of oracle labels to request per batch
             verbose: Output progress details
             seed: Random seed
         '''
@@ -37,6 +39,7 @@ class BARGAIN_PR():
         self.target = target
         self.W = W
         self.M = M
+        self.sample_step = sample_step
         self.proxy = proxy
         self.oracle = oracle
         self.verbose = verbose
@@ -53,7 +56,7 @@ class BARGAIN_PR():
         of all true positives are at sorted index >= t_R, with confidence delta/2.
         """
         delta_recall = self.delta / 2
-        sample_step = 50
+        sample_step = 5 * self.sample_step
 
         perm = np.random.permutation(n)
         ptr = 0
@@ -141,7 +144,7 @@ class BARGAIN_PR():
         if region_size == 0:
             return True
 
-        sample_step = 10
+        sample_step = self.sample_step
         perm = np.random.permutation(np.arange(t_P, n))
         ptr = 0
         all_obs = []
@@ -195,7 +198,7 @@ class BARGAIN_PR():
             return n
 
         thresh_step = max(region_size // self.M, 1)
-        sample_step = 10
+        sample_step = self.sample_step
 
         # Reversed region: index 0 = sorted index n-1 (highest proxy score)
         sampler = WoR_Sampler(region_size)
