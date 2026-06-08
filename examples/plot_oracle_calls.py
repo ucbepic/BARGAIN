@@ -82,16 +82,20 @@ for ds_name, cfg in datasets_config.items():
     np.random.seed(42)
     idxs = np.random.choice(len(ds), cfg['n'], replace=False)
     texts = [cfg['text_fn'](ds, i) for i in idxs]
+    data_idxs = np.arange(len(texts))
+    texts_arr = np.array(texts)
 
     proxy = OpenAIProxy(cfg['task'], model='gpt-4o-mini', is_binary=True)
     oracle = OpenAIOracle(cfg['task'], model='gpt-4o', is_binary=True)
 
-    # Pre-warm proxy cache
     print("Warming proxy cache...")
-    data_idxs = np.arange(len(texts))
-    proxy.get_preds_and_scores(data_idxs, np.array(texts))
+    proxy.get_preds_and_scores(data_idxs, texts_arr)
     saved_proxy_cache = dict(proxy.preds_dict)
     print(f"Proxy cache warmed: {len(saved_proxy_cache)} entries")
+
+    print("Warming oracle cache (labeling all records)...")
+    oracle_labels = oracle.get_pred(texts_arr, data_idxs)
+    print(f"Oracle labels: {int(oracle_labels.sum())} positive, {int((1 - oracle_labels).sum())} negative")
 
     oracle_calls_list = []
     precisions = []
@@ -107,26 +111,66 @@ for ds_name, cfg in datasets_config.items():
         est_positive_idxs = bargain.process(texts)
         oc = oracle.get_number_preds()
         oracle_calls_list.append(oc)
-        print(f"    oracle calls: {oc}/{len(texts)}, returned: {len(est_positive_idxs)}")
 
-    results[ds_name] = oracle_calls_list
-    # Restore proxy.reset
-    proxy.reset = lambda self=proxy: setattr(self, 'preds_dict', {}) or None
+        if len(est_positive_idxs) == 0:
+            prec = 1.0
+        else:
+            prec = oracle_labels[est_positive_idxs].mean()
 
-fig, ax = plt.subplots(figsize=(8, 5))
+        total_pos = oracle_labels.sum()
+        rec = oracle_labels[est_positive_idxs].sum() / total_pos if total_pos > 0 else 1.0
+
+        precisions.append(prec)
+        recalls.append(rec)
+        print(f"    oracle calls: {oc}/{len(texts)}, prec={prec:.3f}, rec={rec:.3f}, returned={len(est_positive_idxs)}")
+
+    results[ds_name] = {
+        'oracle_calls': oracle_calls_list,
+        'precisions': precisions,
+        'recalls': recalls,
+        'n': cfg['n'],
+    }
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 markers = ['o', 's', '^', 'D']
-for i, (ds_name, calls) in enumerate(results.items()):
-    n = int(ds_name.split('(')[1].rstrip(')'))
-    fractions = [c / n for c in calls]
-    ax.plot(targets, fractions, marker=markers[i], label=ds_name, linewidth=2, markersize=8)
 
-ax.set_xlabel('Target (precision & recall)', fontsize=12)
+ax = axes[0]
+for i, (ds_name, r) in enumerate(results.items()):
+    fractions = [c / r['n'] for c in r['oracle_calls']]
+    ax.plot(targets, fractions, marker=markers[i], label=ds_name, linewidth=2, markersize=8)
+ax.set_xlabel('Target', fontsize=12)
 ax.set_ylabel('Fraction of oracle calls', fontsize=12)
-ax.set_title('BARGAIN-PR: Oracle calls vs Target', fontsize=14)
-ax.legend(fontsize=10)
+ax.set_title('Oracle Calls', fontsize=14)
+ax.legend(fontsize=9)
 ax.set_ylim(0, 1.05)
 ax.set_xticks(targets)
 ax.grid(True, alpha=0.3)
+
+ax = axes[1]
+for i, (ds_name, r) in enumerate(results.items()):
+    ax.plot(targets, r['precisions'], marker=markers[i], label=ds_name, linewidth=2, markersize=8)
+ax.plot(targets, targets, 'k--', alpha=0.4, label='y=target')
+ax.set_xlabel('Target', fontsize=12)
+ax.set_ylabel('Precision (oracle)', fontsize=12)
+ax.set_title('Precision vs Target', fontsize=14)
+ax.legend(fontsize=9)
+ax.set_ylim(0.6, 1.05)
+ax.set_xticks(targets)
+ax.grid(True, alpha=0.3)
+
+ax = axes[2]
+for i, (ds_name, r) in enumerate(results.items()):
+    ax.plot(targets, r['recalls'], marker=markers[i], label=ds_name, linewidth=2, markersize=8)
+ax.plot(targets, targets, 'k--', alpha=0.4, label='y=target')
+ax.set_xlabel('Target', fontsize=12)
+ax.set_ylabel('Recall (oracle)', fontsize=12)
+ax.set_title('Recall vs Target', fontsize=14)
+ax.legend(fontsize=9)
+ax.set_ylim(0.6, 1.05)
+ax.set_xticks(targets)
+ax.grid(True, alpha=0.3)
+
+plt.suptitle('BARGAIN-PR: Performance across datasets (delta=0.1)', fontsize=15, y=1.02)
 plt.tight_layout()
-plt.savefig('/home/user/BARGAIN/examples/oracle_calls_plot.png', dpi=150)
+plt.savefig('/home/user/BARGAIN/examples/oracle_calls_plot.png', dpi=150, bbox_inches='tight')
 print(f"\nPlot saved to examples/oracle_calls_plot.png")
