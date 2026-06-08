@@ -141,13 +141,12 @@ with ThreadPoolExecutor(max_workers=4) as executor:
 plot_order = [name for name in datasets_config if name in results]
 
 fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-markers = ['o', 's', '^', 'D']
 
 ax = axes[0]
-for i, ds_name in enumerate(plot_order):
+for ds_name in plot_order:
     r = results[ds_name]
     fractions = [c / r['n'] for c in r['oracle_calls']]
-    ax.plot(targets, fractions, marker=markers[i], label=ds_name, linewidth=2, markersize=8)
+    ax.plot(targets, fractions, label=ds_name, linewidth=2)
 ax.set_xlabel('Target', fontsize=12)
 ax.set_ylabel('Fraction of oracle calls', fontsize=12)
 ax.set_title('Oracle Calls', fontsize=14)
@@ -157,9 +156,9 @@ ax.set_xticks(targets)
 ax.grid(True, alpha=0.3)
 
 ax = axes[1]
-for i, ds_name in enumerate(plot_order):
+for ds_name in plot_order:
     r = results[ds_name]
-    ax.plot(targets, r['precisions'], marker=markers[i], label=ds_name, linewidth=2, markersize=8)
+    ax.plot(targets, r['precisions'], label=ds_name, linewidth=2)
 ax.plot(targets, targets, 'k--', alpha=0.4, label='y=target')
 ax.set_xlabel('Target', fontsize=12)
 ax.set_ylabel('Precision (oracle)', fontsize=12)
@@ -170,9 +169,9 @@ ax.set_xticks(targets)
 ax.grid(True, alpha=0.3)
 
 ax = axes[2]
-for i, ds_name in enumerate(plot_order):
+for ds_name in plot_order:
     r = results[ds_name]
-    ax.plot(targets, r['recalls'], marker=markers[i], label=ds_name, linewidth=2, markersize=8)
+    ax.plot(targets, r['recalls'], label=ds_name, linewidth=2)
 ax.plot(targets, targets, 'k--', alpha=0.4, label='y=target')
 ax.set_xlabel('Target', fontsize=12)
 ax.set_ylabel('Recall (oracle)', fontsize=12)
