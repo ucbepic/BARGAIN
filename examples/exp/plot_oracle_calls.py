@@ -184,5 +184,5 @@ ax.grid(True, alpha=0.3)
 
 plt.suptitle('BARGAIN-PR: Performance across datasets (delta=0.1)', fontsize=15, y=1.02)
 plt.tight_layout()
-plt.savefig('/home/user/BARGAIN/examples/oracle_calls_plot.png', dpi=150, bbox_inches='tight')
-print(f"\nPlot saved to examples/oracle_calls_plot.png")
+plt.savefig('/home/user/BARGAIN/examples/exp/oracle_calls_plot.png', dpi=150, bbox_inches='tight')
+print(f"\nPlot saved to examples/exp/oracle_calls_plot.png")
