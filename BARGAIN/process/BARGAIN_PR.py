@@ -298,6 +298,8 @@ class BARGAIN_PR():
         if self.verbose:
             print("Finding Recall Threshold")
         t_R = self._find_recall_threshold(data_idxs, data_records, n, labeled)
+        self.t_R_ = t_R
+        self.n_ = n
         if self.verbose:
             print(f"Recall threshold at sorted index {t_R} ({t_R * 100 / n:.1f}% rejected)")
 
@@ -330,6 +332,8 @@ class BARGAIN_PR():
                 t_P = self._bargain_precision_search(
                     t_R, data_idxs, data_records, n, labeled, self.delta / 4
                 )
+
+        self.t_P_ = t_P
 
         if self.verbose:
             print(f"Precision threshold at sorted index {t_P}")
