@@ -54,9 +54,11 @@ class BARGAIN_PR():
         """
         Find t_R: the rightmost sorted index such that >= target fraction
         of all true positives are at sorted index >= t_R, with confidence delta/2.
+        Samples uniformly until ~100 positives are found, then stops.
         """
         delta_recall = self.delta / 2
         sample_step = 5 * self.sample_step
+        max_positives = 100
 
         perm = np.random.permutation(n)
         ptr = 0
@@ -101,6 +103,10 @@ class BARGAIN_PR():
 
             if found:
                 best_t = candidate_t
+                break
+
+            if len(pos_sorted_indices) >= max_positives:
+                break
                 break
 
         return best_t
