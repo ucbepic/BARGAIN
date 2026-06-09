@@ -133,14 +133,25 @@ def run_dataset(ds_name, cfg):
         proxy.reset = lambda: None
         oracle.preds_dict = dict(saved_oracle_cache)
         oracle.reset = lambda: None
+        queried = set()
+        _orig_get_pred = type(oracle).get_pred
+        def _tracking_get_pred(self_oracle, data_records, indxs=None):
+            if indxs is not None:
+                for idx in indxs:
+                    queried.add(int(idx))
+            return _orig_get_pred(self_oracle, data_records, indxs)
+        oracle.get_pred = lambda *a, **kw: _tracking_get_pred(oracle, *a, **kw)
 
         bargain = BARGAIN_PR(proxy, oracle, delta=delta, target=target, W=50, seed=0, verbose=False)
         bargain.process(texts)
         n = bargain.n_
-        t_R = bargain.t_R_ / n
-        t_P = bargain.t_P_ / n
-        thresholds.append((t_R, t_P))
-        print(f"[{ds_name}] target={target}: t_R={t_R:.3f}, t_P={t_P:.3f}")
+        t_P = bargain.t_P_
+        not_queried_accept = len([i for i in range(t_P, n) if i not in queried])
+        oracle_frac = len(queried) / n
+        accept_frac = not_queried_accept / n
+        reject_frac = 1 - oracle_frac - accept_frac
+        thresholds.append((reject_frac, oracle_frac, accept_frac))
+        print(f"[{ds_name}] target={target}: reject={reject_frac:.3f}, oracle={oracle_frac:.3f}, accept={accept_frac:.3f}")
 
     print(f"[{ds_name}] COMPLETE")
     return ds_name, thresholds
@@ -162,18 +173,18 @@ fig, axes = plt.subplots(len(plot_order), len(targets), figsize=(18, 6),
 for row, ds_name in enumerate(plot_order):
     for col, target in enumerate(targets):
         ax = axes[row, col]
-        t_R, t_P = results[ds_name][col]
+        rej, orc, acc = results[ds_name][col]
 
-        ax.barh(0, t_R, left=0, height=0.5, color=colors['reject'], alpha=0.8)
-        ax.barh(0, t_P - t_R, left=t_R, height=0.5, color=colors['oracle'], alpha=0.8)
-        ax.barh(0, 1 - t_P, left=t_P, height=0.5, color=colors['accept'], alpha=0.8)
+        ax.barh(0, rej, left=0, height=0.5, color=colors['reject'], alpha=0.8)
+        ax.barh(0, orc, left=rej, height=0.5, color=colors['oracle'], alpha=0.8)
+        ax.barh(0, acc, left=rej + orc, height=0.5, color=colors['accept'], alpha=0.8)
 
-        if t_R > 0.05:
-            ax.text(t_R / 2, 0, f'{t_R:.0%}', ha='center', va='center', fontsize=8, fontweight='bold')
-        if t_P - t_R > 0.05:
-            ax.text((t_R + t_P) / 2, 0, f'{t_P - t_R:.0%}', ha='center', va='center', fontsize=8, fontweight='bold')
-        if 1 - t_P > 0.05:
-            ax.text((t_P + 1) / 2, 0, f'{1 - t_P:.0%}', ha='center', va='center', fontsize=8, fontweight='bold')
+        if rej > 0.05:
+            ax.text(rej / 2, 0, f'{rej:.0%}', ha='center', va='center', fontsize=8, fontweight='bold')
+        if orc > 0.05:
+            ax.text(rej + orc / 2, 0, f'{orc:.0%}', ha='center', va='center', fontsize=8, fontweight='bold')
+        if acc > 0.05:
+            ax.text(rej + orc + acc / 2, 0, f'{acc:.0%}', ha='center', va='center', fontsize=8, fontweight='bold')
 
         ax.set_xlim(0, 1)
         ax.set_ylim(-0.4, 0.4)
@@ -189,9 +200,9 @@ for row, ds_name in enumerate(plot_order):
             ax.set_xticks([])
 
 legend_patches = [
-    mpatches.Patch(color=colors['reject'], alpha=0.8, label='Reject (< t_R)'),
-    mpatches.Patch(color=colors['oracle'], alpha=0.8, label='Oracle (t_R to t_P)'),
-    mpatches.Patch(color=colors['accept'], alpha=0.8, label='Accept (≥ t_P)'),
+    mpatches.Patch(color=colors['reject'], alpha=0.8, label='Proxy only (not queried)'),
+    mpatches.Patch(color=colors['oracle'], alpha=0.8, label='Oracle queried'),
+    mpatches.Patch(color=colors['accept'], alpha=0.8, label='Proxy only (accepted)'),
 ]
 fig.legend(handles=legend_patches, loc='lower center', ncol=3, fontsize=10,
            bbox_to_anchor=(0.5, -0.02))
