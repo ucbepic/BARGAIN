@@ -1,14 +1,17 @@
 import numpy as np
 from typing import Tuple, List, Any
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class Proxy():
     def __init__(
         self,
-        verbose:bool=True
+        verbose:bool=True,
+        max_workers:int=20
     ):
         self.preds_dict={}
         self.verbose=verbose
+        self.max_workers=max_workers
 
     def proxy_func(self, input: str) -> Tuple[Any, float]:
         '''
@@ -29,42 +32,61 @@ class Proxy():
         self.preds_dict={}
 
     def get_preds_and_scores(self, indxs:List, data_records:List) -> Tuple[np.ndarray, np.ndarray]:
-        preds = []
-        scores = []
-        tqdm_bar = len(indxs)>20 and self.verbose
-        for i, x in tqdm(enumerate(indxs), disable=(not tqdm_bar), total=len(indxs)):
+        results = [None] * len(indxs)
+        uncached = []
+        for i, x in enumerate(indxs):
             if x in self.preds_dict:
-                pred, score = self.preds_dict[x]
+                results[i] = self.preds_dict[x]
             else:
-                pred, score = self.proxy_func(data_records[i])
-                self.preds_dict[x] = (pred, score)
-            preds.append(pred)
-            scores.append(score)
-            
+                uncached.append(i)
+
+        if uncached:
+            tqdm_bar = len(uncached) > 20 and self.verbose
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                futures = {executor.submit(self.proxy_func, data_records[i]): i for i in uncached}
+                for future in tqdm(as_completed(futures), disable=(not tqdm_bar), total=len(uncached)):
+                    i = futures[future]
+                    pred, score = future.result()
+                    self.preds_dict[indxs[i]] = (pred, score)
+                    results[i] = (pred, score)
+
+        preds = [r[0] for r in results]
+        scores = [r[1] for r in results]
         return np.array(preds), np.array(scores)
 
 
 class Oracle():
     def __init__(
         self,
-        verbose:bool=True
+        verbose:bool=True,
+        max_workers:int=20
     ):
         self.cached_validations={}
         self.preds_dict={}
         self.verbose=verbose
+        self.max_workers=max_workers
 
     def get_pred(self, data_records:List, indxs:List=None) -> np.ndarray:
-        preds = []
-        tqdm_bar = len(data_records)>20 and self.verbose
-        for i, record in tqdm(enumerate(data_records), disable=(not tqdm_bar), total=len(data_records)):
+        results = [None] * len(data_records)
+        uncached = []
+        for i, record in enumerate(data_records):
             if indxs is not None and indxs[i] in self.preds_dict:
-                oracle_output = self.preds_dict[indxs[i]]
+                results[i] = self.preds_dict[indxs[i]]
             else:
-                _, oracle_output = self.oracle_func(record, "")
-            if indxs is not None:
-                self.preds_dict[indxs[i]] = oracle_output
-            preds.append(oracle_output)
-        return np.array(preds)
+                uncached.append(i)
+
+        if uncached:
+            tqdm_bar = len(uncached) > 20 and self.verbose
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                futures = {executor.submit(self.oracle_func, data_records[i], ""): i for i in uncached}
+                for future in tqdm(as_completed(futures), disable=(not tqdm_bar), total=len(uncached)):
+                    i = futures[future]
+                    _, oracle_output = future.result()
+                    if indxs is not None:
+                        self.preds_dict[indxs[i]] = oracle_output
+                    results[i] = oracle_output
+
+        return np.array(results)
 
     def oracle_func(self, input: str, proxy_output: Any) -> Tuple[bool, Any]:
         '''
@@ -91,16 +113,26 @@ class Oracle():
         self.preds_dict={}
 
     def is_answer_correct(self, data_indxs:List, data_records:List, proxy_output_at_indxs:List) -> np.ndarray:
-        validations = []
-        tqdm_bar = len(data_indxs)>20 and self.verbose
-        for i, x in tqdm(enumerate(data_indxs), disable=not tqdm_bar, total=len(data_indxs)):
-            proxy_output =proxy_output_at_indxs[i] 
+        results = [None] * len(data_indxs)
+        uncached = []
+        for i, x in enumerate(data_indxs):
+            proxy_output = proxy_output_at_indxs[i]
             if (x, proxy_output) in self.cached_validations:
-                is_correct = self.cached_validations[(x, proxy_output)]
+                results[i] = self.cached_validations[(x, proxy_output)]
             else:
-                is_correct, oracle_output = self.oracle_func(data_records[i], proxy_output)
-                self.preds_dict[x] = oracle_output
-                self.cached_validations[(x, proxy_output)] = is_correct
-            validations.append(is_correct)
+                uncached.append(i)
 
-        return np.array(validations)
+        if uncached:
+            tqdm_bar = len(uncached) > 20 and self.verbose
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                futures = {executor.submit(self.oracle_func, data_records[i], proxy_output_at_indxs[i]): i for i in uncached}
+                for future in tqdm(as_completed(futures), disable=(not tqdm_bar), total=len(uncached)):
+                    i = futures[future]
+                    x = data_indxs[i]
+                    proxy_output = proxy_output_at_indxs[i]
+                    is_correct, oracle_output = future.result()
+                    self.preds_dict[x] = oracle_output
+                    self.cached_validations[(x, proxy_output)] = is_correct
+                    results[i] = is_correct
+
+        return np.array(results)
